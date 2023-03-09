@@ -5,7 +5,8 @@
 use day2::Round;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let total_points: u32 = std::fs::read_to_string("input.txt")?
+    let input_str = include_str!("../../input.txt");
+    let total_points: u32 = input_str
         .lines()
         .map(|round_str| -> Round { round_str.parse().unwrap() })
         .map(|round| round.total_points())
