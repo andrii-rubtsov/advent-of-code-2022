@@ -7,19 +7,24 @@ struct CommonCharError {
     msg: String,
 }
 
-fn find_common_char(mut block: Chunk<Lines>) -> Result<char, CommonCharError> {
-    let f = block.next().unwrap().chars();
-    let mut inter: HashSet<char> = HashSet::from_iter(f);
-    for str in block {
-        let a: HashSet<char> = HashSet::from_iter(str.chars());
-        inter.retain(|c| a.contains(c));
-    }
-    if inter.len() != 1 {
+fn find_common_char(block: Chunk<Lines>) -> Result<char, CommonCharError> {
+    let intersection = block
+        .map(|line| HashSet::from_iter(line.chars()))
+        .reduce(|mut acc_set: HashSet<_>, set: HashSet<_>| {
+            acc_set.retain(|item| set.contains(item));
+            acc_set
+        })
+        .unwrap();
+
+    if intersection.len() != 1 {
         Result::Err(CommonCharError {
-            msg: format!("Expected exactly 1 common element, but found: {:?}", inter),
+            msg: format!(
+                "Expected exactly 1 common element, but found: {:?}",
+                intersection
+            ),
         })
     } else {
-        Ok(inter.into_iter().next().unwrap())
+        Ok(intersection.into_iter().next().unwrap())
     }
 }
 
