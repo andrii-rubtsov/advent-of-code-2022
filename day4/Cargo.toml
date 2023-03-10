@@ -1,0 +1,10 @@
+[package]
+name = "day4"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "day4_part1"
+
+[[bin]]
+name = "day4_part2"
