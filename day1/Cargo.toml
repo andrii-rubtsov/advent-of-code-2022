@@ -6,3 +6,6 @@ edition = "2021"
 
 [[bin]]
 name = "day1_part1"
+
+[dependencies]
+utils = { path = "../utils" }

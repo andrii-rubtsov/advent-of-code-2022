@@ -18,14 +18,24 @@ fn find_common(rucksack_str: &str) -> char {
     *common[0]
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let input_str = include_str!("../../part1_input.txt");
-    let sum: u32 = input_str
-        .lines()
-        .map(find_common)
-        .map(day3::get_priority)
-        .sum();
+fn get_priorities_sum() -> Result<u32, Box<dyn std::error::Error>> {
+    let input = std::fs::read_to_string(utils::find_empirically("day3/part1_input.txt"))?;
+    let sum: u32 = input.lines().map(find_common).map(day3::get_priority).sum();
+    Ok(sum)
+}
 
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let sum: u32 = get_priorities_sum()?;
     println!("Total sum is {sum}");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ok() {
+        assert_eq!(get_priorities_sum().unwrap(), 8039);
+    }
 }

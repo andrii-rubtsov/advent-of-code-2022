@@ -1,4 +1,3 @@
-
 #[derive(Debug)]
 pub struct Range {
     start: u32,
@@ -7,7 +6,7 @@ pub struct Range {
 
 impl From<&str> for Range {
     fn from(s: &str) -> Self {
-        let splits: Vec<_> = s.split("-").map(|s| s.parse::<u32>().unwrap()).collect();
+        let splits: Vec<_> = s.split('-').map(|s| s.parse::<u32>().unwrap()).collect();
         if splits.len() != 2 {
             panic!(
                 "Expected ranges to be in format `number-number`, but found: {}",
@@ -15,14 +14,13 @@ impl From<&str> for Range {
             )
         }
         Range {
-            start: *splits.get(0).unwrap(),
+            start: *splits.first().unwrap(),
             end: *splits.get(1).unwrap(),
         }
     }
 }
 
 impl Range {
-    
     pub fn contains_fully(&self, other: &Range) -> bool {
         self.start <= other.start && self.end >= other.end
     }
@@ -30,5 +28,4 @@ impl Range {
     pub fn overlaps(&self, other: &Range) -> bool {
         !(self.end < other.start || self.start > other.end)
     }
-
 }

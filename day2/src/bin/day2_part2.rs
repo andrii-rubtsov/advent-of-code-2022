@@ -51,13 +51,29 @@ fn choose_strategy(enemy: Choice, desired_outcome: DesiredOutcome) -> Round {
     Round::new(enemy, own)
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let total_points: u32 = std::fs::read_to_string("input.txt")?
+fn total_strategic_points() -> Result<u32, Box<dyn std::error::Error>> {
+    let input = std::fs::read_to_string(utils::find_empirically("day2/input.txt"))?;
+    Ok(input
         .lines()
         .map(|round_str| parse_round(round_str).unwrap())
         .map(|(enemy, desired_outcome)| choose_strategy(enemy, desired_outcome))
         .map(|round| round.total_points())
-        .sum();
+        .sum())
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let total_points = total_strategic_points()?;
     println!("Total points: {total_points}");
     Ok(())
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ok() {
+        assert_eq!(total_strategic_points().unwrap(), 14204);
+    }
 }
