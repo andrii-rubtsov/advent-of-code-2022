@@ -1,6 +1,12 @@
 use itertools::{Chunk, Itertools};
 use std::{collections::HashSet, str::Lines};
 
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "."]
+struct Asset;
+
 #[derive(Debug)]
 struct CommonCharError {
     #[allow(unused)]
@@ -29,7 +35,8 @@ fn find_common_char(block: Chunk<Lines>) -> Result<char, CommonCharError> {
 }
 
 fn find_common_and_sum_priorities() -> Result<u32, Box<dyn std::error::Error>> {
-    let input = std::fs::read_to_string(utils::find_empirically("day3/part2_input.txt"))?;
+    let input_resource = Asset::get("part2_input.txt").unwrap();
+    let input = std::str::from_utf8(input_resource.data.as_ref())?;
     let total_sum: u32 = input
         .lines()
         .chunks(3)

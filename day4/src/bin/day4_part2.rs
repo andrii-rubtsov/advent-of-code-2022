@@ -1,7 +1,14 @@
 /*! See https://adventofcode.com/2022/day/4 */
 
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "."]
+struct Asset;
+
 fn count_overlaps() -> Result<usize, Box<dyn std::error::Error>> {
-    let input = std::fs::read_to_string(utils::find_empirically("day4/input.txt"))?;
+    let input_resource = Asset::get("input.txt").unwrap();
+    let input = std::str::from_utf8(input_resource.data.as_ref())?;
     let overlaped_count = input
         .lines()
         .map(|line| {

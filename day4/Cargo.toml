@@ -10,4 +10,4 @@ name = "day4_part1"
 name = "day4_part2"
 
 [dependencies]
-utils = { path = "../utils" }
+rust-embed = "6.6.0"

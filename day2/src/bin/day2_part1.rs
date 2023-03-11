@@ -3,9 +3,15 @@
  */
 
 use day2::Round;
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "."]
+struct Asset;
 
 fn get_total_points() -> Result<u32, Box<dyn std::error::Error>> {
-    let input = std::fs::read_to_string(utils::find_empirically("day2/input.txt"))?;
+    let input_resource = Asset::get("input.txt").unwrap();
+    let input = std::str::from_utf8(input_resource.data.as_ref())?;
     Ok(input
         .lines()
         .map(|round_str| -> Round { round_str.parse().unwrap() })

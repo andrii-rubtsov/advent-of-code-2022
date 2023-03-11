@@ -4,6 +4,12 @@
 
 use day2::{Choice, Round};
 
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "."]
+struct Asset;
+
 enum DesiredOutcome {
     Lose,
     Draw,
@@ -52,7 +58,8 @@ fn choose_strategy(enemy: Choice, desired_outcome: DesiredOutcome) -> Round {
 }
 
 fn total_strategic_points() -> Result<u32, Box<dyn std::error::Error>> {
-    let input = std::fs::read_to_string(utils::find_empirically("day2/input.txt"))?;
+    let input_resource = Asset::get("input.txt").unwrap();
+    let input = std::str::from_utf8(input_resource.data.as_ref())?;
     Ok(input
         .lines()
         .map(|round_str| parse_round(round_str).unwrap())

@@ -4,6 +4,12 @@
 
 use std::collections::HashSet;
 
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "."]
+struct Asset;
+
 fn find_common(rucksack_str: &str) -> char {
     let (first, second) = rucksack_str.split_at(rucksack_str.len() / 2);
     let first_set: HashSet<char> = HashSet::from_iter(first.chars());
@@ -19,7 +25,8 @@ fn find_common(rucksack_str: &str) -> char {
 }
 
 fn get_priorities_sum() -> Result<u32, Box<dyn std::error::Error>> {
-    let input = std::fs::read_to_string(utils::find_empirically("day3/part1_input.txt"))?;
+    let input_resource = Asset::get("part1_input.txt").unwrap();
+    let input = std::str::from_utf8(input_resource.data.as_ref())?;
     let sum: u32 = input.lines().map(find_common).map(day3::get_priority).sum();
     Ok(sum)
 }

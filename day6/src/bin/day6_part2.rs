@@ -2,9 +2,16 @@
 
 use day6::detect_start_of_unique_window;
 
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "."]
+struct Asset;
+
 fn detect_message_start() -> Result<usize, Box<dyn std::error::Error>> {
-    let input_string = std::fs::read_to_string(utils::find_empirically("day6/input.txt"))?;
-    let number = detect_start_of_unique_window(&input_string, 14)?;
+    let input_resource = Asset::get("input.txt").unwrap();
+    let input_string = std::str::from_utf8(input_resource.data.as_ref())?;
+    let number = detect_start_of_unique_window(input_string, 14)?;
     Ok(number)
 }
 

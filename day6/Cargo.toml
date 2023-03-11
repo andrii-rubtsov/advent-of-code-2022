@@ -9,4 +9,4 @@ name = "day6_part1"
 
 
 [dependencies]
-utils = { path = "../utils" }
+rust-embed = "6.6.0"

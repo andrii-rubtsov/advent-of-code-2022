@@ -2,8 +2,15 @@
 
 use day5::{Command, CrateStacks};
 
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "."]
+struct Asset;
+
 fn process_preserve_order_and_peek_top_letters() -> Result<String, Box<dyn std::error::Error>> {
-    let input = std::fs::read_to_string(utils::find_empirically("day5/input.txt"))?;
+    let input_resource = Asset::get("input.txt").unwrap();
+    let input = std::str::from_utf8(input_resource.data.as_ref())?;
 
     let mut stack_lines = vec![];
     let mut command_lines = vec![];
