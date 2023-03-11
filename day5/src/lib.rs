@@ -1,4 +1,3 @@
-
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -12,17 +11,17 @@ pub struct CrateStacks {
 }
 
 impl CrateStacks {
-    /// Parses [CrateStacks] from the folloing text representation:
-    ///
-    ///            [G]         [D]     [Q]    
-    ///    [P]     [T]         [L] [M] [Z]    
-    ///    [Z] [Z] [C]         [Z] [G] [W]    
-    ///    [M] [B] [F]         [P] [C] [H] [N]
-    ///    [T] [S] [R]     [H] [W] [R] [L] [W]
-    ///    [R] [T] [Q] [Z] [R] [S] [Z] [F] [P]
-    ///    [C] [N] [H] [R] [N] [H] [D] [J] [Q]
-    ///    [N] [D] [M] [G] [Z] [F] [W] [S] [S]
-    ///     1   2   3   4   5   6   7   8   9
+    // Parses [CrateStacks] from the folloing text representation:
+    //
+    //            [G]         [D]     [Q]
+    //    [P]     [T]         [L] [M] [Z]
+    //    [Z] [Z] [C]         [Z] [G] [W]
+    //    [M] [B] [F]         [P] [C] [H] [N]
+    //    [T] [S] [R]     [H] [W] [R] [L] [W]
+    //    [R] [T] [Q] [Z] [R] [S] [Z] [F] [P]
+    //    [C] [N] [H] [R] [N] [H] [D] [J] [Q]
+    //    [N] [D] [M] [G] [Z] [F] [W] [S] [S]
+    //     1   2   3   4   5   6   7   8   9
     pub fn from_text_repr(mut stacks_text: Vec<&str>) -> CrateStacks {
         let index_line = stacks_text.pop().unwrap();
         stacks_text.reverse();
@@ -53,6 +52,22 @@ impl CrateStacks {
                 eprintln!("Unable to execute command: {:?}. Source is empty", command);
             }
         }
+    }
+
+    pub fn apply_preserve_order(&mut self, command: &Command) {
+        let drained: Vec<_> = {
+            let source_stack = self.stacks.get_mut(command.from - 1).unwrap();
+            let start_idx = source_stack.len() - command.amount;
+            source_stack.drain(start_idx..).collect()
+        };
+        if drained.len() != command.amount {
+            panic!(
+                "Unable to execute command `{:?}`: not enough items in the source stack",
+                drained
+            )
+        }
+        let target_stack = self.stacks.get_mut(command.to - 1).unwrap();
+        target_stack.extend(drained);
     }
 
     pub fn peek_top_letters(&self) -> Vec<Option<&char>> {

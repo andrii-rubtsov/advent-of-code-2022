@@ -3,11 +3,15 @@ name = "day5"
 version = "0.1.0"
 edition = "2021"
 
+
 [[bin]]
 name = "day5_part1"
+
+[[bin]]
+name = "day5_part2"
+
 
 [dependencies]
 lazy_static = "1.4.0"
 regex = "1.7.1"
-
 utils = { path = "../utils" }

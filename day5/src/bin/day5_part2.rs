@@ -2,7 +2,7 @@
 
 use day5::{Command, CrateStacks};
 
-fn process_and_peek_top_letters() -> Result<String, Box<dyn std::error::Error>> {
+fn process_preserve_order_and_peek_top_letters() -> Result<String, Box<dyn std::error::Error>> {
     let input = std::fs::read_to_string(utils::find_empirically("day5/input.txt"))?;
 
     let mut stack_lines = vec![];
@@ -22,7 +22,7 @@ fn process_and_peek_top_letters() -> Result<String, Box<dyn std::error::Error>> 
     let commands: Vec<Command> = command_lines.iter().map(|&line| line.into()).collect();
 
     for command in commands {
-        stack.apply(&command);
+        stack.apply_preserve_order(&command);
     }
 
     Ok(stack
@@ -33,7 +33,7 @@ fn process_and_peek_top_letters() -> Result<String, Box<dyn std::error::Error>> 
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let top_letters = process_and_peek_top_letters()?;
+    let top_letters = process_preserve_order_and_peek_top_letters()?;
     println!("Top letters are: {top_letters}");
     Ok(())
 }
@@ -45,8 +45,8 @@ mod tests {
     #[test]
     fn ok() {
         assert_eq!(
-            process_and_peek_top_letters().unwrap(),
-            String::from("RTGWZTHLD")
+            process_preserve_order_and_peek_top_letters().unwrap(),
+            String::from("STHGRZZFR")
         );
     }
 }
