@@ -3,6 +3,8 @@ use regex::Regex;
 
 lazy_static! {
     static ref NUMBER_REGEX: Regex = Regex::new(r"\d+").unwrap();
+    static ref COMMAND_REGEX: Regex =
+        Regex::new(r"move (?P<amount>\d+) from (?P<from>\d+) to (?P<to>\d+)").unwrap();
 }
 
 #[derive(Debug)]
@@ -87,10 +89,10 @@ impl From<&str> for Command {
     ///
     /// move 7 from 6 to 8
     fn from(value_str: &str) -> Self {
-        let mut matches = NUMBER_REGEX.find_iter(value_str);
-        let amount: usize = matches.next().unwrap().as_str().parse().unwrap();
-        let from: usize = matches.next().unwrap().as_str().parse().unwrap();
-        let to: usize = matches.next().unwrap().as_str().parse().unwrap();
+        let captures = COMMAND_REGEX.captures_iter(value_str).next().unwrap();
+        let amount: usize = captures.name("amount").unwrap().as_str().parse().unwrap();
+        let from: usize = captures.name("from").unwrap().as_str().parse().unwrap();
+        let to: usize = captures.name("to").unwrap().as_str().parse().unwrap();
         Command { from, to, amount }
     }
 }
