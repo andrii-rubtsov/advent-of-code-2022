@@ -1,14 +1,15 @@
 /*! See https://adventofcode.com/2022/day/7 */
 
-use std::{cell::RefCell, rc::Rc};
+use core::panic;
+use std::{cell::{RefCell, Ref}, rc::Rc};
 
 use lazy_static::lazy_static;
 use regex::Regex;
 use rust_embed::RustEmbed;
 
 lazy_static! {
-    static ref CD_CMD: Regex = Regex::new(r"$ cd (?P<dir>\d+)").unwrap();
-    static ref LS_CMD: Regex = Regex::new(r"$ ls").unwrap();
+    static ref CD_CMD: Regex = Regex::new(r"\$\scd\s(?P<dir>\d+)").unwrap();
+    static ref LS_CMD: Regex = Regex::new(r"\$sls").unwrap();
     static ref LS_DIR: Regex = Regex::new(r"dir\s+(?P<dir>\S+)").unwrap();
     static ref LS_FILE: Regex = Regex::new(r"(?P<size>\d+)\s+(?P<name>\S+)").unwrap();
 }
@@ -42,15 +43,15 @@ impl Node {
 
     pub fn add_node(&mut self, node: Rc<RefCell<Node>>) {
         match self {
-            Node::File { name, size } => panic!("Cannot add nodes to leaf nodes"),
-            Node::Directory { name, nodes } => nodes.push(node),
+            Node::File { name: _, size:_ } => panic!("Cannot add nodes to leaf nodes"),
+            Node::Directory { name:_, nodes } => nodes.push(node),
         }
     }
 
     pub fn total_size(&self) -> usize {
         match self {
-            Node::File { name, size } => *size,
-            Node::Directory { name, nodes } => {
+            Node::File { name:_, size } => *size,
+            Node::Directory { name:_, nodes } => {
                 nodes.iter().map(|elem| elem.borrow().total_size()).sum()
             }
         }
@@ -58,44 +59,33 @@ impl Node {
 
     pub fn is_file(&self) -> bool {
         match self {
-            Node::File{ name, size } => true,
+            Node::File { name: _, size: _ } => true,
             _ => false,
         }
     }
 
     pub fn is_directory(&self) -> bool {
-        return !self.is_file();
+        !self.is_file()
     }
 
-    pub fn iter_directories(&self) -> dyn Iterator<Item::Node> {
+    pub fn iter_directories(&self) -> impl Iterator<Item=Ref<Node>>  {
         match self {
-            Node::File { name, size } => panic!("Cannot iterator over leaf nodes"),
-            Node::Directory { name, nodes } => {
-                nodes.iter().filter(|node| | node.is_directory())
+            Node::File { name: _, size: _ } => panic!("Cannot iterator over leaf nodes"),
+            Node::Directory { name:_ , nodes } => {
+                nodes.iter()
+                    .filter(|&node| node.as_ref().borrow().is_directory())
+                    .map(|node| node.as_ref().borrow())
             }
         }
     }
 }
 
-struct DirIterator<'a> {
-    parent: &'a Node,
-    curr: Iter<'a, Node>,
-}
-
-impl<'a> Iterator for DirIterator<'a> {
-    type Item = &'a Node;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        
-    }
-}
 
 fn build_virtual_fs() -> Result<Node, Box<dyn std::error::Error>> {
     let input_resource = Asset::get("input.txt").unwrap();
     let input_string = std::str::from_utf8(input_resource.data.as_ref())?;
 
-    let root = Node::new_directory("/".into());
-    let mut dir_chain = vec![Rc::new(RefCell::new(root))];
+    let mut dir_chain: Vec<Rc<RefCell<Node>>> = vec![];
 
     let mut is_ls_mode = false;
 
@@ -123,13 +113,15 @@ fn build_virtual_fs() -> Result<Node, Box<dyn std::error::Error>> {
         } else if CD_CMD.is_match(line) {
             let captures = CD_CMD.captures_iter(line).next().unwrap();
             let dir: &str = captures.name("dir").unwrap().as_str();
-            if dir == ".." {
+            if dir == "/" {
+                let root = Node::new_directory("/".into());
+                dir_chain.push(Rc::new(RefCell::new(root)));
+            } else if dir == ".." {
                 dir_chain.remove(dir_chain.len() - 1);
             } else {
                 let dir_node = Rc::new(RefCell::new(Node::new_directory(dir.into())));
+                dir_chain.last().unwrap().borrow_mut().add_node(Rc::clone(&dir_node));
                 dir_chain.push(Rc::clone(&dir_node));
-                let last = dir_chain.last().unwrap();
-                last.borrow_mut().add_node(dir_node);
             }
         } else if LS_CMD.is_match(line) {
             is_ls_mode = true;
@@ -139,18 +131,27 @@ fn build_virtual_fs() -> Result<Node, Box<dyn std::error::Error>> {
     Ok(Rc::try_unwrap(dir_chain.remove(0)).ok().unwrap().into_inner())
 }
 
-fn total_dir_size(root: &Node, dir_size_limit: usize) -> usize {
+fn sum_dir_sizes_below_limit(root: &Node, dir_size_limit: usize) -> usize {
     let size = root.total_size();
     if size < dir_size_limit {
         return size;
     } else {
-        root.
+        let sum_less_limit: usize = root.iter_directories()
+            .filter(|dir| dir.total_size() <= dir_size_limit)
+            .map(|dir| dir.total_size())
+            .sum();
+        let sum_over_limit: usize = root.iter_directories()
+            .filter(|dir| dir.total_size() > dir_size_limit)
+            .map(|dir| sum_dir_sizes_below_limit(&dir, dir_size_limit))
+            .sum();
+
+        sum_less_limit + sum_over_limit
     }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let virtual_fs = build_virtual_fs()?;
-    let total_dir_size = total_dir_size(&virtual_fs, 100_000_00);
+    let total_dir_size = sum_dir_sizes_below_limit(&virtual_fs, 100_000);
      println!("Dir size sum: {total_dir_size}");
     Ok(())
 }
@@ -161,6 +162,8 @@ mod tests {
 
     #[test]
     fn test() {
-        //assert_eq!(detect_packet_start().unwrap(), 1833);
+        let virtual_fs = build_virtual_fs().unwrap();
+        let total_dir_size = sum_dir_sizes_below_limit(&virtual_fs, 100_000);
+        assert_eq!(total_dir_size, 1111);
     }
 }
