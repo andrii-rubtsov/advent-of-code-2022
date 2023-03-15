@@ -1,6 +1,6 @@
 /*! See https://adventofcode.com/2022/day/7 */
 
-use day7::{Node, build_virtual_fs};
+use day7::{build_virtual_fs, Node};
 
 fn sum_dir_sizes_below_limit(root: &Node, dir_size_limit: usize) -> usize {
     let mut total = 0;

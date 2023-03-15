@@ -1,4 +1,3 @@
-
 use core::panic;
 use std::{
     cell::{Ref, RefCell},
@@ -136,7 +135,6 @@ pub fn build_virtual_fs(file_path: &str) -> Result<Node, Box<dyn std::error::Err
         .into_inner())
 }
 
-
 #[cfg(test)]
 mod tests {
     use std::{cell::RefCell, rc::Rc};
@@ -182,5 +180,4 @@ mod tests {
 
         assert_eq!(root.borrow().total_size(), 66);
     }
-
 }
