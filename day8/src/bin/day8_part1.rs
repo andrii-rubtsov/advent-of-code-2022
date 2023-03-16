@@ -1,38 +1,79 @@
 /*! See https://adventofcode.com/2022/day/8 */
 
-use std::io::{self, BufRead, BufReader, Read};
+use day8::Forest;
+use std::io::Read;
 
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
 #[folder = "."]
-pub struct Asset;
+struct Asset;
 
 #[derive(Debug)]
-struct Forest {
-    trees: Vec<Vec<u8>>,
+struct VisibleForest {
+    forest: Forest,
     visible: Vec<Vec<bool>>,
 }
 
-impl Forest {
-    fn height(&self) -> usize {
-        self.trees.len()
-    }
-
-    fn width(&self) -> usize {
-        self.trees[0].len()
-    }
-
-    fn from_reader(reader: impl Read) -> Result<Forest, io::Error> {
-        let mut trees: Vec<Vec<u8>> = vec![];
+impl VisibleForest {
+    fn from_forest(forest: Forest) -> VisibleForest {
         let mut visible: Vec<Vec<bool>> = vec![];
+        for row in &forest.trees {
+            visible.push(vec![false; row.len()]);
+        }
+        VisibleForest { forest, visible }
+    }
 
-        for line in BufReader::new(reader).lines() {
-            trees.push(line?.chars().map(|c| c as u8).collect());
-            visible.push(vec![false; trees.last().unwrap().len()]);
+    fn mark_visible(&mut self) {
+        let forest = &self.forest;
+        let width = forest.width();
+        let height = forest.height();
+
+        // mark edges as visible
+        for row in 0..height {
+            self.visible[row][0] = true;
+            self.visible[row][width - 1] = true;
+        }
+        for col in 0..width {
+            self.visible[0][col] = true;
+            self.visible[height - 1][col] = true;
         }
 
-        Ok(Forest { trees, visible })
+        // from up
+        for col in 1..width {
+            let mut max = forest.trees[0][col];
+            for row in 1..height {
+                self.visible[row][col] |= forest.trees[row][col] > max;
+                max = max.max(forest.trees[row][col]);
+            }
+        }
+
+        // from bottom
+        for col in 1..width {
+            let mut max = forest.trees[height - 1][col];
+            for row in (1..height).rev() {
+                self.visible[row][col] |= forest.trees[row][col] > max;
+                max = max.max(forest.trees[row][col]);
+            }
+        }
+
+        // from left
+        for row in 1..height {
+            let mut max = forest.trees[row][0];
+            for col in 1..width {
+                self.visible[row][col] |= forest.trees[row][col] > max;
+                max = max.max(forest.trees[row][col]);
+            }
+        }
+
+        // from right
+        for row in 1..height {
+            let mut max = forest.trees[row][width - 1];
+            for col in (1..width).rev() {
+                self.visible[row][col] |= forest.trees[row][col] > max;
+                max = max.max(forest.trees[row][col]);
+            }
+        }
     }
 
     fn count_visible(&self) -> usize {
@@ -43,61 +84,11 @@ impl Forest {
     }
 }
 
-fn mark_visible(forest: &mut Forest) {
-    let width = forest.width();
-    let height = forest.height();
-
-    // mark edges as visible
-    for row in 0..height {
-        forest.visible[row][0] = true;
-        forest.visible[row][width - 1] = true;
-    }
-    for col in 0..width {
-        forest.visible[0][col] = true;
-        forest.visible[height - 1][col] = true;
-    }
-
-    // from up
-    for col in 1..width {
-        let mut max = forest.trees[0][col];
-        for row in 1..height {
-            forest.visible[row][col] |= forest.trees[row][col] > max;
-            max = max.max(forest.trees[row][col]);
-        }
-    }
-
-    // from bottom
-    for col in 1..width {
-        let mut max = forest.trees[height - 1][col];
-        for row in (1..height).rev() {
-            forest.visible[row][col] |= forest.trees[row][col] > max;
-            max = max.max(forest.trees[row][col]);
-        }
-    }
-
-    // from left
-    for row in 1..height {
-        let mut max = forest.trees[row][0];
-        for col in 1..width {
-            forest.visible[row][col] |= forest.trees[row][col] > max;
-            max = max.max(forest.trees[row][col]);
-        }
-    }
-
-    // from right
-    for row in 1..height {
-        let mut max = forest.trees[row][width - 1];
-        for col in (1..width).rev() {
-            forest.visible[row][col] |= forest.trees[row][col] > max;
-            max = max.max(forest.trees[row][col]);
-        }
-    }
-}
-
 fn count_visible_trees(reader: impl Read) -> Result<usize, Box<dyn std::error::Error>> {
-    let mut forest = Forest::from_reader(reader)?;
-    mark_visible(&mut forest);
-    Ok(forest.count_visible())
+    let forest = Forest::from_reader(reader)?;
+    let mut visible_forest = VisibleForest::from_forest(forest);
+    visible_forest.mark_visible();
+    Ok(visible_forest.count_visible())
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -106,6 +97,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Visible trees count: {visible_trees_count}");
     Ok(())
 }
+
 
 #[cfg(test)]
 mod tests {
