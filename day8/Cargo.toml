@@ -7,6 +7,9 @@ edition = "2021"
 [[bin]]
 name = "day8_part1"
 
+[[bin]]
+name = "day8_part2"
+
 [dependencies]
 rust-embed = "6.6.0"
 lazy_static = "1.4.0"
