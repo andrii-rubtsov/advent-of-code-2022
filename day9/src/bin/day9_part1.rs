@@ -92,17 +92,6 @@ impl Default for BridgeMotions {
 }
 
 impl BridgeMotions {
-    pub fn new() -> Self {
-        let initial_pos = Pos::default();
-        let mut tail_positions = HashSet::new();
-        tail_positions.insert(initial_pos);
-        BridgeMotions {
-            tail_positions,
-            head: initial_pos,
-            tail: initial_pos,
-        }
-    }
-
     pub fn process_head_movement(&mut self, head_movement: &Movement) {
         use Direction::*;
 
@@ -112,7 +101,7 @@ impl BridgeMotions {
             Right => self.head.x += head_movement.steps as i32,
             Left => self.head.x -= head_movement.steps as i32,
         }
-        while self.head.dist(&self.tail) >= 2 {
+        while self.head.dist(&self.tail) > 1 {
             let new_tail_pos: Pos = match head_movement.direction {
                 Up => Pos::new(self.head.x, self.tail.y + 1),
                 Down => Pos::new(self.head.x, self.tail.y - 1),
@@ -126,7 +115,7 @@ impl BridgeMotions {
 }
 
 fn total_unique_tail_locations(reader: impl Read) -> Result<usize, io::Error> {
-    let mut bridge_motions = BridgeMotions::new();
+    let mut bridge_motions = BridgeMotions::default();
     for line in BufReader::new(reader).lines() {
         let movement: Movement = line?.as_str().into();
         bridge_motions.process_head_movement(&movement);
