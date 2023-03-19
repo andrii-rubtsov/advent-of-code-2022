@@ -1,0 +1,11 @@
+[package]
+name = "day9"
+version = "0.1.0"
+edition = "2021"
+
+
+[[bin]]
+name = "day9_part1"
+
+[dependencies]
+rust-embed = "6.6.0"
