@@ -64,6 +64,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "day10"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "regex",
+ "rust-embed",
+]
+
+[[package]]
 name = "day2"
 version = "0.1.0"
 dependencies = [
