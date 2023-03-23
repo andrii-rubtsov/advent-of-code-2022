@@ -1,6 +1,4 @@
-/*! https://adventofcode.com/2022/day/3
-   Part 1
-*/
+/*! See https://adventofcode.com/2022/day/3 */
 
 use std::collections::HashSet;
 

@@ -1,3 +1,5 @@
+/*! See https://adventofcode.com/2022/day/3 */
+
 use itertools::{Chunk, Itertools};
 use std::{collections::HashSet, str::Lines};
 

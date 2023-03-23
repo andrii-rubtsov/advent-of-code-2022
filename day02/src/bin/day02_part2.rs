@@ -1,6 +1,4 @@
-/*! See https://adventofcode.com/2022/day/2
- * Part 2
- */
+/*! See https://adventofcode.com/2022/day/2 */
 
 use day02::{Choice, Round};
 

@@ -1,6 +1,4 @@
-/*! See https://adventofcode.com/2022/day/2
- * Part 1
- */
+/*! See https://adventofcode.com/2022/day/2 */
 
 use day02::Round;
 use rust_embed::RustEmbed;
