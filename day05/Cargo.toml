@@ -1,0 +1,17 @@
+[package]
+name = "day05"
+version = "0.1.0"
+edition = "2021"
+
+
+[[bin]]
+name = "day05_part1"
+
+[[bin]]
+name = "day05_part2"
+
+
+[dependencies]
+lazy_static = "1.4.0"
+regex = "1.7.1"
+rust-embed = "6.6.0"

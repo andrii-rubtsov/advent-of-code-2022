@@ -1,0 +1,14 @@
+[package]
+name = "day03"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "day03_part1"
+
+[[bin]]
+name = "day03_part2"
+
+[dependencies]
+itertools = "0.10.5"
+rust-embed = "6.6.0"

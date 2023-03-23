@@ -57,7 +57,75 @@ dependencies = [
 ]
 
 [[package]]
-name = "day1"
+name = "day01"
+version = "0.1.0"
+dependencies = [
+ "rust-embed",
+]
+
+[[package]]
+name = "day02"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "rust-embed",
+]
+
+[[package]]
+name = "day03"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "rust-embed",
+]
+
+[[package]]
+name = "day04"
+version = "0.1.0"
+dependencies = [
+ "rust-embed",
+]
+
+[[package]]
+name = "day05"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "regex",
+ "rust-embed",
+]
+
+[[package]]
+name = "day06"
+version = "0.1.0"
+dependencies = [
+ "rust-embed",
+]
+
+[[package]]
+name = "day07"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "log",
+ "pretty_env_logger",
+ "regex",
+ "rust-embed",
+]
+
+[[package]]
+name = "day08"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "log",
+ "pretty_env_logger",
+ "regex",
+ "rust-embed",
+]
+
+[[package]]
+name = "day09"
 version = "0.1.0"
 dependencies = [
  "rust-embed",
@@ -69,74 +137,6 @@ version = "0.1.0"
 dependencies = [
  "lazy_static",
  "regex",
- "rust-embed",
-]
-
-[[package]]
-name = "day2"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "rust-embed",
-]
-
-[[package]]
-name = "day3"
-version = "0.1.0"
-dependencies = [
- "itertools",
- "rust-embed",
-]
-
-[[package]]
-name = "day4"
-version = "0.1.0"
-dependencies = [
- "rust-embed",
-]
-
-[[package]]
-name = "day5"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "regex",
- "rust-embed",
-]
-
-[[package]]
-name = "day6"
-version = "0.1.0"
-dependencies = [
- "rust-embed",
-]
-
-[[package]]
-name = "day7"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "log",
- "pretty_env_logger",
- "regex",
- "rust-embed",
-]
-
-[[package]]
-name = "day8"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "log",
- "pretty_env_logger",
- "regex",
- "rust-embed",
-]
-
-[[package]]
-name = "day9"
-version = "0.1.0"
-dependencies = [
  "rust-embed",
 ]
 
