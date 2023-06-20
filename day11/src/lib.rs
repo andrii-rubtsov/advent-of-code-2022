@@ -1,6 +1,12 @@
+use std::{
+    collections::HashMap,
+    io::{BufRead, BufReader, Read},
+    str::FromStr,
+};
+
 enum Operand {
     Argument,
-    IntValue(u32),
+    IntValue(u128),
 }
 
 enum BinaryOperator {
@@ -15,7 +21,7 @@ pub struct Operation {
 }
 
 impl Operation {
-    pub fn apply(&self, arg: u32) -> u32 {
+    pub fn apply(&self, arg: u128) -> u128 {
         let left = match self.left_operand {
             Operand::Argument => arg,
             Operand::IntValue(val) => val,
@@ -34,12 +40,12 @@ impl Operation {
         let parts: Vec<_> = op_str.split(' ').collect();
         let left_operand: Operand = match parts[0] {
             "old" => Operand::Argument,
-            s => Operand::IntValue(str::parse::<u32>(s).unwrap()),
+            s => Operand::IntValue(u128::from_str(s).unwrap()),
         };
 
         let right_operand: Operand = match parts[2] {
             "old" => Operand::Argument,
-            s => Operand::IntValue(str::parse::<u32>(s).unwrap()),
+            s => Operand::IntValue(u128::from_str(s).unwrap()),
         };
 
         let binary_operator: BinaryOperator = match parts[1] {
@@ -56,29 +62,29 @@ impl Operation {
     }
 }
 
-pub trait NextMonkey {
-    fn next_monkey_index(&self, stress_level: u32) -> usize;
-}
-
-pub struct DivisibleByNextMonkeyTest {
-    divisor: u32,
+pub struct DivisibleByTest {
+    divisor: u128,
     true_idx: usize,
     false_idx: usize,
 }
 
-impl NextMonkey for DivisibleByNextMonkeyTest {
-    fn next_monkey_index(&self, stress_level: u32) -> usize {
+impl DivisibleByTest {
+    fn next_monkey_index(&self, stress_level: u128) -> usize {
         match stress_level % self.divisor == 0 {
             true => self.true_idx,
             false => self.false_idx,
         }
     }
+
+    pub fn divisor(&self) -> u128 {
+        self.divisor
+    }
 }
 
 pub struct Monkey {
-    pub items: Vec<u32>,
+    pub items: Vec<u128>,
     pub operation: Operation,
-    pub next_monkey: Box<dyn NextMonkey>,
+    pub divisible_by_test: DivisibleByTest,
     pub total_inspections: usize,
 }
 
@@ -91,9 +97,9 @@ impl Monkey {
     //   If true: throw to monkey 7
     //   If false: throw to monkey 4
     pub fn parse(buffer: &str) -> Monkey {
-        let mut starting_items: Vec<u32> = vec![];
+        let mut starting_items: Vec<u128> = vec![];
         let mut operation: Option<Operation> = Option::None;
-        let mut divisor: u32 = 0;
+        let mut divisor: u128 = u128::default();
         let mut true_idx: usize = 0;
         let mut false_idx: usize = 0;
 
@@ -114,7 +120,7 @@ impl Monkey {
                 starting_items = remainder
                     .split(',')
                     .map(str::trim)
-                    .map(|str_item: &str| str::parse::<u32>(str_item).unwrap())
+                    .map(|str_item: &str| u128::from_str(str_item).unwrap())
                     .collect();
             } else if let Some(remainder) = match_and_strip(line, "Operation: new = ") {
                 operation = Option::Some(Operation::parse(remainder));
@@ -126,7 +132,7 @@ impl Monkey {
                 false_idx = str::parse(remainder).unwrap();
             }
         }
-        let next_monkey = DivisibleByNextMonkeyTest {
+        let divisible_by_test = DivisibleByTest {
             divisor,
             true_idx,
             false_idx,
@@ -135,8 +141,78 @@ impl Monkey {
         Monkey {
             items: starting_items,
             operation: operation.unwrap(),
-            next_monkey: Box::new(next_monkey),
+            divisible_by_test,
             total_inspections: 0,
         }
     }
+}
+
+pub fn parse_all_monkeys(reader: impl Read) -> Vec<Monkey> {
+    let mut monkeys = vec![];
+    let mut buffer = String::new();
+    for input_line in BufReader::new(reader).lines() {
+        let line = input_line.unwrap();
+        if line.is_empty() {
+            if !buffer.is_empty() {
+                monkeys.push(Monkey::parse(&buffer));
+            }
+            buffer = String::new();
+        } else {
+            buffer.push_str(&line);
+            buffer.push('\n');
+        }
+    }
+    if !buffer.is_empty() {
+        monkeys.push(Monkey::parse(&buffer));
+    }
+    monkeys
+}
+
+pub fn process_round(
+    monkeys: &mut Vec<Monkey>,
+    decrease_stress_level: bool,
+    common_divisor: Option<u128>,
+) {
+    for i in 0..monkeys.len() {
+        let mut new_owners: HashMap<usize, Vec<u128>> = HashMap::new();
+
+        let mut monkey = &mut monkeys[i];
+        for &stress_level in &monkey.items {
+            let mut new_stress_level = monkey.operation.apply(stress_level);
+            if decrease_stress_level {
+                new_stress_level /= 3;
+            }
+
+            // Critical optimization: assuming all tests are "divisible by", it is mathematically ok
+            // to use the remainder after division by common divisor 
+            if let Some(max) = common_divisor {
+                if new_stress_level >= max {
+                    new_stress_level %= max;
+                }
+            }
+
+            let next_monkey_idx = monkey.divisible_by_test.next_monkey_index(new_stress_level);
+
+            new_owners
+                .entry(next_monkey_idx)
+                .or_default()
+                .push(new_stress_level);
+        }
+        monkey.total_inspections += monkey.items.len();
+        monkey.items.clear();
+
+        for (idx, mut new_items) in new_owners {
+            monkeys[idx].items.append(&mut new_items);
+        }
+    }
+}
+
+pub fn calculate_monkey_business(monkeys: &mut [Monkey]) -> u128 {
+    monkeys.sort_by_key(|m| -(m.total_inspections as i128));
+    monkeys
+        .iter()
+        .take(2)
+        .map(|m| m.total_inspections as u128)
+        .reduce(|acc, e| acc * e)
+        .unwrap()
 }
