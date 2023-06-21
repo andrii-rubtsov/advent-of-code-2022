@@ -11,4 +11,4 @@ name = "day03_part2"
 
 [dependencies]
 itertools = "0.10.5"
-rust-embed = "6.6.0"
+rust-embed = "6.6"

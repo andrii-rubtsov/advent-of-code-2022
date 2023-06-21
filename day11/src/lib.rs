@@ -184,7 +184,7 @@ pub fn process_round(
             }
 
             // Critical optimization: assuming all tests are "divisible by", it is mathematically ok
-            // to use the remainder after division by common divisor 
+            // to use the remainder after division by common divisor
             if let Some(max) = common_divisor {
                 if new_stress_level >= max {
                     new_stress_level %= max;

@@ -12,4 +12,4 @@ name = "day02_part2"
 
 [dependencies]
 lazy_static = "1.4.0"
-rust-embed = "6.6.0"
+rust-embed = "6.6"

@@ -12,7 +12,7 @@ name = "day07_part2"
 
 
 [dependencies]
-rust-embed = "6.6.0"
+rust-embed = "6.6"
 lazy_static = "1.4.0"
 regex = "1.7.1"
 log = "0.4"
