@@ -1,0 +1,16 @@
+[package]
+name = "day13"
+version = "0.1.0"
+edition = "2021"
+
+
+[[bin]]
+name = "day13_part1"
+
+[[bin]]
+name = "day13_part2"
+
+[dependencies]
+pest = "2.7.0"
+pest_derive = "2.7.0"
+rust-embed = "6.6"
