@@ -12,4 +12,5 @@ name = "day01_part2"
 
 
 [dependencies]
+itertools = "0.11.0"
 rust-embed = "6.6"
