@@ -165,14 +165,14 @@ mod tests {
             for j in 0..i {
                 assert!(lines[j].cmp(&lines[i]) == Ordering::Less);
                 assert!(lines[i].cmp(&lines[j]) == Ordering::Greater);
-                assert!(lines[j].eq(&lines[i]) == false);
-                assert!(lines[i].eq(&lines[j]) == false);
+                assert!(!lines[j].eq(&lines[i]));
+                assert!(!lines[i].eq(&lines[j]));
             }
             for j in i + 1..lines.len() {
                 assert!(lines[j].cmp(&lines[i]) == Ordering::Greater);
                 assert!(lines[i].cmp(&lines[j]) == Ordering::Less);
-                assert!(lines[j].eq(&lines[i]) == false);
-                assert!(lines[i].eq(&lines[j]) == false);
+                assert!(!lines[j].eq(&lines[i]));
+                assert!(!lines[i].eq(&lines[j]));
             }
         }
     }
