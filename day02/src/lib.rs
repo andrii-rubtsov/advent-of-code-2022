@@ -1,7 +1,6 @@
 use std::{char::ParseCharError, cmp::Ordering, collections::HashMap, str::FromStr};
 
-#[macro_use]
-extern crate lazy_static;
+use lazy_static::lazy_static;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Choice {
@@ -36,7 +35,7 @@ impl Choice {
         CHOICE_LOOSES.get(self).unwrap().clone()
     }
 
-    pub fn points(&self) -> u32 {
+    pub fn points(&self) -> usize {
         match self {
             Choice::Rock => 1,
             Choice::Paper => 2,
@@ -44,23 +43,15 @@ impl Choice {
         }
     }
 
-    pub fn decode_own(c: char) -> Choice {
+    pub fn decode(c: char) -> Choice {
         match c {
-            'X' => Choice::Rock,
-            'Y' => Choice::Paper,
-            'Z' => Choice::Scissors,
-            _ => panic!(),
+            'X'|'A' => Choice::Rock,
+            'Y'|'B' => Choice::Paper,
+            'Z'|'C' => Choice::Scissors,
+            _ => unreachable!(),
         }
     }
 
-    pub fn decode_enemy(c: char) -> Choice {
-        match c {
-            'A' => Choice::Rock,
-            'B' => Choice::Paper,
-            'C' => Choice::Scissors,
-            _ => panic!(),
-        }
-    }
 }
 
 impl PartialOrd for Choice {
@@ -88,7 +79,7 @@ impl Round {
         Round { enemy, own }
     }
 
-    pub fn total_points(&self) -> u32 {
+    pub fn total_points(&self) -> usize {
         // 1) unconditionally get points for the chozen strategy
         let mut total = self.own.points();
 
@@ -107,18 +98,18 @@ impl Round {
 pub struct ParseRoundError(String);
 impl From<ParseCharError> for ParseRoundError {
     fn from(value: ParseCharError) -> Self {
-        ParseRoundError(format!("{}", value))
+        ParseRoundError(format!("Error parsing round from '{}'", value))
     }
 }
 
 impl FromStr for Round {
     type Err = ParseRoundError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> { 
         let (enemy_s, own_s) = (char::from_str(&s[..1])?, char::from_str(&s[2..])?);
         Ok(Round::new(
-            Choice::decode_enemy(enemy_s),
-            Choice::decode_own(own_s),
+            Choice::decode(enemy_s),
+            Choice::decode(own_s),
         ))
     }
 }
