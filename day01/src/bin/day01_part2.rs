@@ -1,26 +1,43 @@
 /*! See https://adventofcode.com/2022/day/1 */
 
+use itertools::Itertools;
 use rust_embed::RustEmbed;
+use std::{
+    cmp::Reverse,
+    collections::BinaryHeap,
+    io::{BufRead, BufReader, Read},
+};
 
 #[derive(RustEmbed)]
 #[folder = "."]
 struct Asset;
 
-fn sum_calories_by_top(top: usize) -> Result<u32, Box<dyn std::error::Error>> {
-    let input_resource = Asset::get("input.txt").unwrap();
-    let input = std::str::from_utf8(input_resource.data.as_ref())?;
-    let mut calories: Vec<u32> = input
-        .split("\n\n")
-        .map(|block| block.lines().map(|s| s.parse::<u32>().unwrap()).sum())
-        .collect();
+fn sum_calories_by_top(reader: impl Read, top_num: usize) -> usize {
+    let group_sums = BufReader::new(reader)
+        .lines()
+        .map(|line| line.unwrap().parse::<usize>().ok())
+        .batching(|it| {
+            it.take_while(|it| it.is_some())
+                .map(|maybe_num| maybe_num.unwrap())
+                .sum1()
+        });
 
-    calories.sort_by(|v1, v2| v2.cmp(v1));
-
-    Ok(calories.iter().take(top).sum::<u32>())
+    // Reverse allows to efficiently remove the smallest value form the "top+1" - sized max heap:
+    // Even though it is a "max" heap, the needed for `Reverse` comes from the fact that 
+    // heap only provides an efficient (O(1)) way to remove the "largest" value via `pop`.
+    let mut heap: BinaryHeap<Reverse<usize>> = BinaryHeap::with_capacity(top_num + 1);
+    for group in group_sums {
+        heap.push(Reverse(group));
+        if heap.len() > top_num {
+            heap.pop();
+        }
+    }
+    heap.iter().map(|reversed| reversed.0).sum()
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let sum_calories_by_top: u32 = sum_calories_by_top(3)?;
+    let asset = Asset::get("input.txt").unwrap();
+    let sum_calories_by_top = sum_calories_by_top(asset.data.as_ref(), 3);
     println!("Total calories by top 3: {}", sum_calories_by_top);
     Ok(())
 }
@@ -30,7 +47,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ok() {
-        assert_eq!(sum_calories_by_top(3).unwrap(), 212117);
+    fn test_input() {
+        let asset = Asset::get("test_input.txt").unwrap();
+        assert_eq!(sum_calories_by_top(asset.data.as_ref(), 3), 45000);
+    }
+
+    #[test]
+    fn actual_input() {
+        let asset = Asset::get("input.txt").unwrap();
+        assert_eq!(sum_calories_by_top(asset.data.as_ref(), 3), 212117);
     }
 }

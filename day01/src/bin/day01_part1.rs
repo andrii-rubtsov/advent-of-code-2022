@@ -14,11 +14,9 @@ fn get_max_calories(reader: impl Read) -> usize {
         .lines()
         .map(|line| line.unwrap().parse::<usize>().ok())
         .batching(|it| {
-            let mut sum = None;
-            while let Some(Some(res)) = it.next() {
-                sum = Some(res + sum.unwrap_or(0));
-            }
-            sum
+            it.take_while(|it| it.is_some())
+                .map(|maybe_num: Option<usize>| maybe_num.unwrap())
+                .sum1()
         })
         .max()
         .unwrap()
