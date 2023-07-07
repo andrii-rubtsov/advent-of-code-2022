@@ -1,19 +1,20 @@
+#![feature(lazy_cell)]
+
 use core::panic;
 use std::{
     cell::{Ref, RefCell},
     rc::Rc,
+    sync::LazyLock,
 };
 
-use lazy_static::lazy_static;
 use regex::Regex;
 use rust_embed::RustEmbed;
 
-lazy_static! {
-    static ref CD_CMD: Regex = Regex::new(r"\$\scd\s+(?P<dir>\S+)").unwrap();
-    static ref LS_CMD: Regex = Regex::new(r"\$\s+ls").unwrap();
-    static ref LS_DIR: Regex = Regex::new(r"dir\s+(?P<dir>\S+)").unwrap();
-    static ref LS_FILE: Regex = Regex::new(r"(?P<size>\d+)\s+(?P<name>\S+)").unwrap();
-}
+static CD_CMD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\$\scd\s+(?P<dir>\S+)").unwrap());
+static LS_CMD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\$\s+ls").unwrap());
+static LS_DIR: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"dir\s+(?P<dir>\S+)").unwrap());
+static LS_FILE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?P<size>\d+)\s+(?P<name>\S+)").unwrap());
 
 #[derive(RustEmbed)]
 #[folder = "."]

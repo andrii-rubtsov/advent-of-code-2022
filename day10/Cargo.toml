@@ -12,5 +12,4 @@ name = "day10_part2"
 
 [dependencies]
 rust-embed = "6.6"
-lazy_static = "1.4.0"
 regex = "1.7.1"

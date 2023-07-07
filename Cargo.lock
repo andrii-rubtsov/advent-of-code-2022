@@ -69,7 +69,6 @@ name = "day02"
 version = "0.1.0"
 dependencies = [
  "itertools",
- "lazy_static",
  "rust-embed",
 ]
 
@@ -92,7 +91,6 @@ dependencies = [
 name = "day05"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
  "regex",
  "rust-embed",
 ]
@@ -108,7 +106,6 @@ dependencies = [
 name = "day07"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
  "log",
  "pretty_env_logger",
  "regex",
@@ -119,9 +116,6 @@ dependencies = [
 name = "day08"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
- "log",
- "pretty_env_logger",
  "regex",
  "rust-embed",
 ]
@@ -137,7 +131,6 @@ dependencies = [
 name = "day10"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
  "regex",
  "rust-embed",
 ]
@@ -237,12 +230,6 @@ checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
 dependencies = [
  "either",
 ]
-
-[[package]]
-name = "lazy_static"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"

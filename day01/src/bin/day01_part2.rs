@@ -23,7 +23,7 @@ fn sum_calories_by_top(reader: impl Read, top_num: usize) -> usize {
         });
 
     // Reverse allows to efficiently remove the smallest value form the "top+1" - sized max heap:
-    // Even though it is a "max" heap, the needed for `Reverse` comes from the fact that 
+    // Even though it is a "max" heap, the needed for `Reverse` comes from the fact that
     // heap only provides an efficient (O(1)) way to remove the "largest" value via `pop`.
     let mut heap: BinaryHeap<Reverse<usize>> = BinaryHeap::with_capacity(top_num + 1);
     for group in group_sums {

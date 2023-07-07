@@ -1,11 +1,14 @@
-use lazy_static::lazy_static;
+#![feature(lazy_cell)]
+
+use std::sync::LazyLock;
+
 use regex::Regex;
 
-lazy_static! {
-    static ref NUMBER_REGEX: Regex = Regex::new(r"\d+").unwrap();
-    static ref COMMAND_REGEX: Regex =
-        Regex::new(r"move (?P<amount>\d+) from (?P<from>\d+) to (?P<to>\d+)").unwrap();
-}
+static NUMBER_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\d+").unwrap());
+
+static COMMAND_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"move (?P<amount>\d+) from (?P<from>\d+) to (?P<to>\d+)").unwrap()
+});
 
 #[derive(Debug)]
 pub struct CrateStacks {

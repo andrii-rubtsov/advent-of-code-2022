@@ -1,6 +1,8 @@
-use std::{char::ParseCharError, cmp::Ordering, collections::HashMap, str::FromStr};
+#![feature(lazy_cell)]
 
-use lazy_static::lazy_static;
+use std::{
+    char::ParseCharError, cmp::Ordering, collections::HashMap, str::FromStr, sync::LazyLock,
+};
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Choice {
@@ -9,22 +11,21 @@ pub enum Choice {
     Scissors,
 }
 
-lazy_static! {
-    static ref CHOICE_WINS: HashMap<Choice, Choice> = {
-        let mut m = HashMap::with_capacity(3);
-        m.insert(Choice::Rock, Choice::Scissors);
-        m.insert(Choice::Scissors, Choice::Paper);
-        m.insert(Choice::Paper, Choice::Rock);
-        m
-    };
-    static ref CHOICE_LOOSES: HashMap<Choice, Choice> = {
-        let mut m = HashMap::with_capacity(3);
-        for (key, value) in CHOICE_WINS.iter() {
-            m.insert(value.clone(), key.clone());
-        }
-        m
-    };
-}
+static CHOICE_WINS: LazyLock<HashMap<Choice, Choice>> = LazyLock::new(|| {
+    let mut m = HashMap::with_capacity(3);
+    m.insert(Choice::Rock, Choice::Scissors);
+    m.insert(Choice::Scissors, Choice::Paper);
+    m.insert(Choice::Paper, Choice::Rock);
+    m
+});
+
+static CHOICE_LOOSES: LazyLock<HashMap<Choice, Choice>> = LazyLock::new(|| {
+    let mut m = HashMap::with_capacity(3);
+    for (key, value) in CHOICE_WINS.iter() {
+        m.insert(value.clone(), key.clone());
+    }
+    m
+});
 
 impl Choice {
     pub fn wins(&self) -> Choice {
@@ -45,13 +46,12 @@ impl Choice {
 
     pub fn decode(c: char) -> Choice {
         match c {
-            'X'|'A' => Choice::Rock,
-            'Y'|'B' => Choice::Paper,
-            'Z'|'C' => Choice::Scissors,
+            'X' | 'A' => Choice::Rock,
+            'Y' | 'B' => Choice::Paper,
+            'Z' | 'C' => Choice::Scissors,
             _ => unreachable!(),
         }
     }
-
 }
 
 impl PartialOrd for Choice {
@@ -105,11 +105,8 @@ impl From<ParseCharError> for ParseRoundError {
 impl FromStr for Round {
     type Err = ParseRoundError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> { 
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (enemy_s, own_s) = (char::from_str(&s[..1])?, char::from_str(&s[2..])?);
-        Ok(Round::new(
-            Choice::decode(enemy_s),
-            Choice::decode(own_s),
-        ))
+        Ok(Round::new(Choice::decode(enemy_s), Choice::decode(own_s)))
     }
 }

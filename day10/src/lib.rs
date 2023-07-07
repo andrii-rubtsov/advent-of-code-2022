@@ -1,11 +1,14 @@
-use lazy_static::lazy_static;
-use regex::Regex;
-use std::io::{BufRead, BufReader, Read};
+#![feature(lazy_cell)]
 
-lazy_static! {
-    static ref CMD_NOOP: Regex = Regex::new(r"noop").unwrap();
-    static ref CMD_ADDX: Regex = Regex::new(r"addx (?P<value>[-]?\d+)").unwrap();
-}
+use regex::Regex;
+use std::{
+    io::{BufRead, BufReader, Read},
+    sync::LazyLock,
+};
+
+static CMD_NOOP: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"noop").unwrap());
+static CMD_ADDX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"addx (?P<value>[-]?\d+)").unwrap());
 
 pub fn x_register_values(read: impl Read) -> Result<Vec<i32>, Box<dyn std::error::Error>> {
     let mut x = Vec::with_capacity(256);

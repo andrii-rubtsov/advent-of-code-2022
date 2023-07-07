@@ -176,7 +176,7 @@ pub fn process_round(
     for i in 0..monkeys.len() {
         let mut new_owners: HashMap<usize, Vec<u128>> = HashMap::new();
 
-        let mut monkey = &mut monkeys[i];
+        let monkey = &mut monkeys[i];
         for &stress_level in &monkey.items {
             let mut new_stress_level = monkey.operation.apply(stress_level);
             if decrease_stress_level {

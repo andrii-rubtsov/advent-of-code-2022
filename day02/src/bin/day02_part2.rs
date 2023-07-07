@@ -1,6 +1,6 @@
 /*! See https://adventofcode.com/2022/day/2 */
 
-use std::io::{BufRead, Read, BufReader};
+use std::io::{BufRead, BufReader, Read};
 
 use day02::{Choice, Round};
 
@@ -71,7 +71,6 @@ fn main() {
     let total_points = total_strategic_points(asset.data.as_ref());
     println!("Total points: {total_points}");
 }
-
 
 #[cfg(test)]
 mod tests {
