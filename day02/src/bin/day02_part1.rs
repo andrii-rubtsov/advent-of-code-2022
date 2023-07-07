@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/2 */
 
+use std::io::{BufRead, BufReader, Read};
+
 use day02::Round;
 use rust_embed::RustEmbed;
 
@@ -7,18 +9,18 @@ use rust_embed::RustEmbed;
 #[folder = "."]
 struct Asset;
 
-fn get_total_points() -> Result<u32, Box<dyn std::error::Error>> {
-    let input_resource = Asset::get("input.txt").unwrap();
-    let input = std::str::from_utf8(input_resource.data.as_ref())?;
-    Ok(input
+fn get_total_points(reader: impl Read) -> usize {
+    BufReader::new(reader)
         .lines()
-        .map(|round_str| -> Round { round_str.parse().unwrap() })
+        .map(|line_maybe| line_maybe.unwrap())
+        .map(|round_str| round_str.parse::<Round>().unwrap())
         .map(|round| round.total_points())
-        .sum())
+        .sum()
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let total_points = get_total_points()?;
+    let asset = Asset::get("input.txt").unwrap();
+    let total_points = get_total_points(asset.data.as_ref());
     println!("Total points: {total_points}");
     Ok(())
 }
@@ -28,7 +30,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ok() {
-        assert_eq!(get_total_points().unwrap(), 13526);
+    fn test_input() {
+        let asset = Asset::get("test_input.txt").unwrap();
+        assert_eq!(get_total_points(asset.data.as_ref()), 15);
+    }
+
+    #[test]
+    fn actual_input() {
+        let asset = Asset::get("input.txt").unwrap();
+        assert_eq!(get_total_points(asset.data.as_ref()), 13526);
     }
 }
