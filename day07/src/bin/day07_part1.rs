@@ -22,7 +22,7 @@ fn sum_dir_sizes_below_limit(root: &Node, dir_size_limit: usize) -> usize {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let input = Asset::get("test_input.txt").unwrap();
+    let input = Asset::get("input.txt").unwrap();
     let virtual_fs = build_virtual_fs(input.data.as_ref())?;
     let total_dir_size = sum_dir_sizes_below_limit(&virtual_fs, 100_000);
     println!("Dir size sum: {total_dir_size}");

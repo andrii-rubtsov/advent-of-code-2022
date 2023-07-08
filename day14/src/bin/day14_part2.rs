@@ -43,7 +43,7 @@ fn total_came_to_rest_endless_floor(reader: impl Read) -> usize {
 }
 
 fn main() {
-    let asset = Asset::get("test_input.txt").unwrap();
+    let asset = Asset::get("input.txt").unwrap();
     let sand_units_came_to_rest = total_came_to_rest_endless_floor(asset.data.as_ref());
     println!("Total sand units came to rest: {sand_units_came_to_rest}");
 }

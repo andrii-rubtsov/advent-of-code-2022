@@ -20,7 +20,7 @@ fn sum_right_ordered_indices(reader: impl Read) -> Result<usize, Box<dyn std::er
 }
 
 fn main() {
-    let asset = Asset::get("test_input.txt").unwrap();
+    let asset = Asset::get("input.txt").unwrap();
     let right_ordered_sum = sum_right_ordered_indices(asset.data.as_ref()).unwrap();
     println!("Sum of right ordered indices: {right_ordered_sum}");
 }

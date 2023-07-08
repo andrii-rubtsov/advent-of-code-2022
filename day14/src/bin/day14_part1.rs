@@ -39,7 +39,7 @@ fn total_came_to_rest(reader: impl Read) -> usize {
 }
 
 fn main() {
-    let asset = Asset::get("test_input.txt").unwrap();
+    let asset = Asset::get("input.txt").unwrap();
     let sand_units_came_to_rest = total_came_to_rest(asset.data.as_ref());
     println!("Total sand units came to rest: {sand_units_came_to_rest}");
 }

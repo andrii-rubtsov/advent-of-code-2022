@@ -31,9 +31,7 @@ fn find_best_trail_len(reader: impl Read) -> usize {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let asset = Asset::get("input.txt").unwrap();
-    let reader = asset.data.as_ref();
-
-    let shortest_path = find_best_trail_len(reader);
+    let shortest_path = find_best_trail_len(asset.data.as_ref());
     println!("Shortest path: {shortest_path}");
     Ok(())
 }

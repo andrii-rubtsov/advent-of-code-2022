@@ -26,10 +26,7 @@ fn process_rounds(reader: impl Read) -> u128 {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let asset = Asset::get("input.txt").unwrap();
-    let reader = asset.data.as_ref();
-
-    let monkey_business = process_rounds(reader);
-
+    let monkey_business = process_rounds(asset.data.as_ref());
     println!("Monkey business: {monkey_business}");
     Ok(())
 }

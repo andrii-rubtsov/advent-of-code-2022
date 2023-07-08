@@ -18,7 +18,7 @@ fn detect_packet_start(mut reader: impl Read) -> Result<usize, Box<dyn std::erro
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let asset = Asset::get("test_input.txt").unwrap();
+    let asset = Asset::get("input.txt").unwrap();
     let message_start = detect_packet_start(asset.data.as_ref())?;
     println!("Number of characters before packet start: {message_start}");
     Ok(())

@@ -18,7 +18,7 @@ fn detect_message_start(mut reader: impl Read) -> Result<usize, Box<dyn std::err
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let asset = Asset::get("test_input.txt").unwrap();
+    let asset = Asset::get("input.txt").unwrap();
     let message_start = detect_message_start(asset.data.as_ref())?;
     println!("Number of characters before message start: {message_start}");
     Ok(())

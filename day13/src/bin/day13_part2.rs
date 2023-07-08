@@ -28,7 +28,7 @@ fn calc_decoder_key(reader: impl Read) -> Result<usize, Box<dyn std::error::Erro
 }
 
 fn main() {
-    let asset = Asset::get("test_input.txt").unwrap();
+    let asset = Asset::get("input.txt").unwrap();
     let decoder_key = calc_decoder_key(asset.data.as_ref()).unwrap();
     println!("Decoder key: {decoder_key}");
 }

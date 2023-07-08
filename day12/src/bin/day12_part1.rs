@@ -18,10 +18,7 @@ fn find_shortest_path(reader: impl Read) -> usize {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let asset = Asset::get("input.txt").unwrap();
-    let reader = asset.data.as_ref();
-
-    let shortest_path: usize = find_shortest_path(reader);
-
+    let shortest_path = find_shortest_path(asset.data.as_ref());
     println!("Shortest path: {shortest_path}");
     Ok(())
 }
