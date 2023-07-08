@@ -1,7 +1,7 @@
-pub fn get_priority(c: char) -> u32 {
+pub fn get_priority(c: char) -> usize {
     match c {
-        'a'..='z' => (c as u32) - ('a' as u32) + 1,
-        'A'..='Z' => (c as u32) - ('A' as u32) + 27,
+        'a'..='z' => (c as usize) - ('a' as usize) + 1,
+        'A'..='Z' => (c as usize) - ('A' as usize) + 27,
         _ => panic!("Unable to determine priority for unsupported char '{}'", c),
     }
 }

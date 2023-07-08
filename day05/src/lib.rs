@@ -27,11 +27,11 @@ impl CrateStacks {
     //    [C] [N] [H] [R] [N] [H] [D] [J] [Q]
     //    [N] [D] [M] [G] [Z] [F] [W] [S] [S]
     //     1   2   3   4   5   6   7   8   9
-    pub fn from_text_repr(mut stacks_text: Vec<&str>) -> CrateStacks {
+    pub fn from_text_repr(mut stacks_text: Vec<String>) -> CrateStacks {
         let index_line = stacks_text.pop().unwrap();
         stacks_text.reverse();
         let mut stacks_vec = Vec::with_capacity(10);
-        for num_match in NUMBER_REGEX.find_iter(index_line) {
+        for num_match in NUMBER_REGEX.find_iter(&index_line) {
             let num = num_match.as_str();
             let num_idx = index_line.find(num).unwrap();
             let mut v = vec![];

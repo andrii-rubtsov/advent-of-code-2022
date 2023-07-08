@@ -1,18 +1,18 @@
 /*! See https://adventofcode.com/2022/day/4 */
 
+use std::io::{BufRead, BufReader, Read};
+
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
 #[folder = "."]
 struct Asset;
 
-fn count_overlaps() -> Result<usize, Box<dyn std::error::Error>> {
-    let input_resource = Asset::get("input.txt").unwrap();
-    let input = std::str::from_utf8(input_resource.data.as_ref())?;
-    let overlaped_count = input
+fn count_overlaps(reader: impl Read) -> Result<usize, Box<dyn std::error::Error>> {
+    let overlaped_count = BufReader::new(reader)
         .lines()
         .map(|line| {
-            let mut parts: Vec<day04::Range> = line.split(',').map(|s| s.into()).collect();
+            let mut parts: Vec<day04::Range> = line.unwrap().split(',').map(|s| s.into()).collect();
             if parts.len() != 2 {
                 panic!("Expected to have exactly 2 ranges, but found: {:?}", parts);
             }
@@ -29,7 +29,8 @@ fn count_overlaps() -> Result<usize, Box<dyn std::error::Error>> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let overlaps_count = count_overlaps()?;
+    let asset = Asset::get("input.txt").unwrap();
+    let overlaps_count = count_overlaps(asset.data.as_ref())?;
     println!("Overlaps count: {overlaps_count}");
     Ok(())
 }
@@ -39,7 +40,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ok() {
-        assert_eq!(count_overlaps().unwrap(), 938);
+    fn test_input() {
+        let asset = Asset::get("test_input.txt").unwrap();
+        assert_eq!(count_overlaps(asset.data.as_ref()).unwrap(), 4);
+    }
+
+    #[test]
+    fn actual_input() {
+        let asset = Asset::get("input.txt").unwrap();
+        assert_eq!(count_overlaps(asset.data.as_ref()).unwrap(), 938);
     }
 }

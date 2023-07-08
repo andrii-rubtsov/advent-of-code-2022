@@ -4,15 +4,13 @@ pub fn detect_start_of_unique_window(
     input: &str,
     uniq_len: usize,
 ) -> Result<usize, Box<dyn std::error::Error>> {
-    let input_vec: Vec<char> = input.chars().collect();
-    let input_chars: &[char] = &input_vec[..];
+    let input_bytes: &[u8] = input.as_bytes();
+    let mut window: HashMap<u8, usize> = HashMap::with_capacity(uniq_len);
 
-    let mut window: HashMap<char, usize> = HashMap::with_capacity(4);
-
-    for (idx, &char) in input_chars.iter().enumerate() {
-        *window.entry(char).or_default() += 1;
+    for (idx, &byte) in input_bytes.iter().enumerate() {
+        *window.entry(byte).or_default() += 1;
         if idx >= uniq_len {
-            let prev = input_chars[idx - uniq_len];
+            let prev = input_bytes[idx - uniq_len];
             if let Some(&v) = window.get(&prev) {
                 if v > 1 {
                     *window.entry(prev).or_default() -= 1;

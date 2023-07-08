@@ -1,6 +1,11 @@
 /*! See https://adventofcode.com/2022/day/7 */
 
 use day07::{build_virtual_fs, Node};
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "."]
+pub struct Asset;
 
 fn sum_dir_sizes_below_limit(root: &Node, dir_size_limit: usize) -> usize {
     let mut total = 0;
@@ -17,7 +22,8 @@ fn sum_dir_sizes_below_limit(root: &Node, dir_size_limit: usize) -> usize {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let virtual_fs = build_virtual_fs("input.txt")?;
+    let input = Asset::get("test_input.txt").unwrap();
+    let virtual_fs = build_virtual_fs(input.data.as_ref())?;
     let total_dir_size = sum_dir_sizes_below_limit(&virtual_fs, 100_000);
     println!("Dir size sum: {total_dir_size}");
     Ok(())
@@ -72,14 +78,16 @@ mod tests {
 
     #[test]
     fn test_test_input() {
-        let virtual_fs = build_virtual_fs("test_input.txt").unwrap();
+        let input = Asset::get("test_input.txt").unwrap();
+        let virtual_fs = build_virtual_fs(input.data.as_ref()).unwrap();
         let total_dir_size = sum_dir_sizes_below_limit(&virtual_fs, 100_000);
         assert_eq!(total_dir_size, 95437);
     }
 
     #[test]
     fn test_actual_input() {
-        let virtual_fs = build_virtual_fs("input.txt").unwrap();
+        let input = Asset::get("input.txt").unwrap();
+        let virtual_fs = build_virtual_fs(input.data.as_ref()).unwrap();
         let total_dir_size = sum_dir_sizes_below_limit(&virtual_fs, 100_000);
         assert_eq!(total_dir_size, 1770595);
     }

@@ -23,7 +23,7 @@ fn get_max_calories(reader: impl Read) -> usize {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let asset = Asset::get("test_input.txt").unwrap();
+    let asset = Asset::get("input.txt").unwrap();
     let max_elf_calories: usize = get_max_calories(asset.data.as_ref());
     println!("Max calories per elf: {}", max_elf_calories);
     Ok(())

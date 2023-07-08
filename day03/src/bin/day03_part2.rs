@@ -1,7 +1,10 @@
 /*! See https://adventofcode.com/2022/day/3 */
 
 use itertools::{Chunk, Itertools};
-use std::{collections::HashSet, str::Lines};
+use std::{
+    collections::HashSet,
+    io::{BufRead, BufReader, Read},
+};
 
 use rust_embed::RustEmbed;
 
@@ -15,7 +18,7 @@ struct CommonCharError {
     msg: String,
 }
 
-fn find_common_char(block: Chunk<Lines>) -> Result<char, CommonCharError> {
+fn find_common_char<T: Iterator<Item = String>>(block: Chunk<T>) -> Result<char, CommonCharError> {
     let intersection = block
         .map(|line| HashSet::from_iter(line.chars()))
         .reduce(|mut acc_set: HashSet<_>, set: HashSet<_>| {
@@ -36,11 +39,10 @@ fn find_common_char(block: Chunk<Lines>) -> Result<char, CommonCharError> {
     }
 }
 
-fn find_common_and_sum_priorities() -> Result<u32, Box<dyn std::error::Error>> {
-    let input_resource = Asset::get("part2_input.txt").unwrap();
-    let input = std::str::from_utf8(input_resource.data.as_ref())?;
-    let total_sum: u32 = input
+fn find_common_and_sum_priorities(reader: impl Read) -> Result<usize, Box<dyn std::error::Error>> {
+    let total_sum: usize = BufReader::new(reader)
         .lines()
+        .map(|s| s.unwrap())
         .chunks(3)
         .into_iter()
         .map(|block| find_common_char(block).unwrap())
@@ -50,7 +52,8 @@ fn find_common_and_sum_priorities() -> Result<u32, Box<dyn std::error::Error>> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let total_sum = find_common_and_sum_priorities()?;
+    let asset = Asset::get("part2_input.txt").unwrap();
+    let total_sum = find_common_and_sum_priorities(asset.data.as_ref())?;
     println!("Total sum is {total_sum}");
     Ok(())
 }
@@ -60,7 +63,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ok() {
-        assert_eq!(find_common_and_sum_priorities().unwrap(), 2510);
+    fn test_input() {
+        let asset = Asset::get("test_input.txt").unwrap();
+        assert_eq!(
+            find_common_and_sum_priorities(asset.data.as_ref()).unwrap(),
+            70
+        );
+    }
+
+    #[test]
+    fn actual_input() {
+        let asset = Asset::get("part2_input.txt").unwrap();
+        assert_eq!(
+            find_common_and_sum_priorities(asset.data.as_ref()).unwrap(),
+            2510
+        );
     }
 }

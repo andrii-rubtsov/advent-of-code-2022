@@ -3,22 +3,18 @@
 use core::panic;
 use std::{
     cell::{Ref, RefCell},
+    io::{BufRead, BufReader, Read},
     rc::Rc,
     sync::LazyLock,
 };
 
 use regex::Regex;
-use rust_embed::RustEmbed;
 
 static CD_CMD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\$\scd\s+(?P<dir>\S+)").unwrap());
 static LS_CMD: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\$\s+ls").unwrap());
 static LS_DIR: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"dir\s+(?P<dir>\S+)").unwrap());
 static LS_FILE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?P<size>\d+)\s+(?P<name>\S+)").unwrap());
-
-#[derive(RustEmbed)]
-#[folder = "."]
-pub struct Asset;
 
 #[derive(Debug)]
 pub enum Node {
@@ -79,15 +75,14 @@ impl Node {
     }
 }
 
-pub fn build_virtual_fs(file_path: &str) -> Result<Node, Box<dyn std::error::Error>> {
-    let input_resource = Asset::get(file_path).unwrap();
-    let input_string = std::str::from_utf8(input_resource.data.as_ref())?;
-
+pub fn build_virtual_fs(reader: impl Read) -> Result<Node, Box<dyn std::error::Error>> {
     let mut dir_chain: Vec<Rc<RefCell<Node>>> = vec![];
 
     let mut is_ls_mode = false;
 
-    for line in input_string.lines() {
+    for maybe_line in BufReader::new(reader).lines() {
+        let line_string = maybe_line?;
+        let line = line_string.as_str();
         if is_ls_mode && line.starts_with("$ ") {
             is_ls_mode = false;
         }

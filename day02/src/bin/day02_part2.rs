@@ -67,7 +67,7 @@ fn total_strategic_points(reader: impl Read) -> usize {
 }
 
 fn main() {
-    let asset = Asset::get("test_input.txt").unwrap();
+    let asset = Asset::get("input.txt").unwrap();
     let total_points = total_strategic_points(asset.data.as_ref());
     println!("Total points: {total_points}");
 }

@@ -1,7 +1,11 @@
 /*! See https://adventofcode.com/2022/day/3 */
 
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    io::{BufRead, BufReader, Read},
+};
 
+use day03::get_priority;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
@@ -22,19 +26,18 @@ fn find_common(rucksack_str: &str) -> char {
     *common[0]
 }
 
-fn get_priorities_sum() -> Result<u32, Box<dyn std::error::Error>> {
-    let input_resource = Asset::get("part1_input.txt").unwrap();
-    let input = std::str::from_utf8(input_resource.data.as_ref())?;
-    let sum: u32 = input
+fn get_priorities_sum(reader: impl Read) -> Result<usize, Box<dyn std::error::Error>> {
+    let sum: usize = BufReader::new(reader)
         .lines()
-        .map(find_common)
-        .map(day03::get_priority)
+        .map(|line_maybe| find_common(line_maybe.unwrap().as_str()))
+        .map(get_priority)
         .sum();
     Ok(sum)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let sum: u32 = get_priorities_sum()?;
+    let asset = Asset::get("input.txt").unwrap();
+    let sum: usize = get_priorities_sum(asset.data.as_ref())?;
     println!("Total sum is {sum}");
     Ok(())
 }
@@ -44,7 +47,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ok() {
-        assert_eq!(get_priorities_sum().unwrap(), 8039);
+    fn test_input() {
+        let asset = Asset::get("test_input.txt").unwrap();
+        assert_eq!(get_priorities_sum(asset.data.as_ref()).unwrap(), 157);
+    }
+
+    #[test]
+    fn actual_input() {
+        let asset = Asset::get("part1_input.txt").unwrap();
+        assert_eq!(get_priorities_sum(asset.data.as_ref()).unwrap(), 8039);
     }
 }

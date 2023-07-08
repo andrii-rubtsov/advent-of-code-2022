@@ -1,18 +1,20 @@
 /*! See https://adventofcode.com/2022/day/4 */
 
+use std::io::{BufRead, BufReader, Read};
+
+use day04::Range;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
 #[folder = "."]
 struct Asset;
 
-fn count_fully_contained_ranges() -> Result<usize, Box<dyn std::error::Error>> {
-    let input_resource = Asset::get("input.txt").unwrap();
-    let input = std::str::from_utf8(input_resource.data.as_ref())?;
-    let fully_contained_count = input
+fn count_fully_contained_ranges(reader: impl Read) -> Result<usize, Box<dyn std::error::Error>> {
+    let fully_contained_count = BufReader::new(reader)
         .lines()
+        .map(|line_maybe| line_maybe.unwrap())
         .map(|line| {
-            let mut parts: Vec<day04::Range> = line.split(',').map(|s| s.into()).collect();
+            let mut parts: Vec<Range> = line.split(',').map(|s| s.into()).collect();
             if parts.len() != 2 {
                 panic!("Expected to have exactly 2 ranges, but found: {:?}", parts);
             }
@@ -29,7 +31,8 @@ fn count_fully_contained_ranges() -> Result<usize, Box<dyn std::error::Error>> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let fully_contained_count = count_fully_contained_ranges()?;
+    let asset = Asset::get("input.txt").unwrap();
+    let fully_contained_count = count_fully_contained_ranges(asset.data.as_ref())?;
     println!("Fully contained count: {fully_contained_count}");
     Ok(())
 }
@@ -39,7 +42,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ok() {
-        assert_eq!(count_fully_contained_ranges().unwrap(), 657);
+    fn test_input() {
+        let asset = Asset::get("test_input.txt").unwrap();
+        assert_eq!(
+            count_fully_contained_ranges(asset.data.as_ref()).unwrap(),
+            2
+        );
+    }
+
+    #[test]
+    fn actual_input() {
+        let asset = Asset::get("input.txt").unwrap();
+        assert_eq!(
+            count_fully_contained_ranges(asset.data.as_ref()).unwrap(),
+            657
+        );
     }
 }
