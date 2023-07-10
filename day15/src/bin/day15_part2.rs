@@ -129,9 +129,6 @@ fn find_distress_signal(map: &mut Map) -> Pos {
         for j in i..line_fragments.len() {
             let fragment1 = &line_fragments[i];
             let fragment2 = &line_fragments[j];
-            if fragment1.start == Pos::new(8, 17) {
-                println!("Checking framgents: one={fragment1:?}, two={fragment2:?}");
-            }
 
             // Eevry intersection of border line framgents is a potential distress signal candidate
             // By checking only "diamond" borders and their interscections the algorith significantly narrows
