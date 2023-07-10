@@ -1,0 +1,15 @@
+[package]
+name = "day15"
+version = "0.1.0"
+edition = "2021"
+
+
+[[bin]]
+name = "day15_part1"
+
+[[bin]]
+name = "day15_part2"
+
+[dependencies]
+regex = "1.9.1"
+rust-embed = "6.6"
