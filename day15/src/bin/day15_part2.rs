@@ -1,4 +1,4 @@
-/*! See https://adventofcode.com/2022/day/13 */
+/*! See https://adventofcode.com/2022/day/15 */
 
 use day15::{manhattan_dist, Pos, COORDS_REGEX};
 use rust_embed::RustEmbed;

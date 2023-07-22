@@ -1,4 +1,4 @@
-/*! See https://adventofcode.com/2022/day/13 */
+/*! See https://adventofcode.com/2022/day/14 */
 
 use day14::{Cave, Cell, Pos};
 use rust_embed::RustEmbed;
