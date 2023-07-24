@@ -1,12 +1,12 @@
 /*! See https://adventofcode.com/2022/day/16 */
 
-use day16::Node;
+use day16::{Node, Action, decode_open_valves_indexes, parse_nodes};
 use log::LevelFilter;
 
 use rust_embed::RustEmbed;
 use std::{
     collections::{HashMap, HashSet},
-    io::{BufRead, BufReader, Read},
+    io::Read,
 };
 
 #[derive(RustEmbed)]
@@ -18,12 +18,6 @@ struct CacheKey {
     current_node_idx: usize,
     open_valves: u128, // ASSUMPTION: the total number of valves is less than 128
     time_budget: usize,
-}
-
-fn decode_open_valves_indexes(open_valves: u128) -> HashSet<usize> {
-    (0..128)
-        .filter(|idx| open_valves & (1 << idx) > 0)
-        .collect()
 }
 
 impl CacheKey {
@@ -56,12 +50,7 @@ impl CacheKey {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-enum Action {
-    Idle,
-    Move(usize),
-    Open(usize),
-}
+
 
 #[derive(Clone, Debug)]
 struct OptimizedResult {
@@ -184,33 +173,6 @@ impl<'a> CachingReleasedPressureOptimizer<'a> {
     }
 }
 
-fn parse_nodes(reader: impl Read) -> Vec<Node> {
-    let mut nodes: Vec<Node> = vec![];
-    let mut label_to_node_idx: HashMap<String, usize> = HashMap::new();
-
-    // Initial parsing of labels
-    for (idx, maybe_line) in BufReader::new(reader).lines().enumerate() {
-        let line = maybe_line.unwrap();
-        let node = Node::parse(line);
-        label_to_node_idx.insert(node.label.clone(), idx);
-        nodes.push(node);
-    }
-
-    // Convert and assign nodes labels to indexes for more optimal and convenient access
-    for node in nodes.iter_mut() {
-        node.tunnels_idx = node
-            .tunnels_labels
-            .iter()
-            .map(|label| *label_to_node_idx.get(label.as_str()).unwrap())
-            .collect();
-    }
-
-    assert!(
-        nodes.len() <= 128,
-        "`CacheKey` struct is specifically optimized for less than 128 nodes"
-    );
-    nodes
-}
 
 fn calculate_max_pressure_released(
     reader: impl Read,
@@ -224,11 +186,18 @@ fn calculate_max_pressure_released(
         optimizer.maximize_released_pressure(time_budget_mins, initial_node_label);
 
     if log::log_enabled!(log::Level::Debug) {
-        let mut open_valves: Vec<usize> = vec![];
+        print_debug_actions(optimized_result.actions_lineage.iter(), &nodes);
+    }
+
+    optimized_result.total_pressure_released
+}
+
+fn print_debug_actions<'a>(actions_lineage: impl Iterator<Item=&'a Action>, nodes: &[Node]) {
+    let mut open_valves: Vec<usize> = vec![];
         let mut total_rate = 0;
         let mut released_so_far = 0;
 
-        for (idx, &action) in optimized_result.actions_lineage.iter().enumerate() {
+        for (idx, action) in actions_lineage.enumerate() {
             log::debug!("=== Minute {} ===", idx + 1);
             if open_valves.is_empty() {
                 log::debug!("Valves open: <none>");
@@ -254,27 +223,25 @@ fn calculate_max_pressure_released(
                 Action::Move(node_idx) => {
                     log::debug!(
                         "Action: move to node {}-{}",
-                        &nodes[node_idx].label,
+                        &nodes[*node_idx].label,
                         node_idx + 1
                     );
                 }
                 Action::Open(node_idx) => {
-                    open_valves.push(node_idx);
-                    total_rate += nodes[node_idx].rate;
+
+                    open_valves.push(*node_idx);
+                    total_rate += nodes[*node_idx].rate;
                     log::debug!(
                         "Action: open node {}-{}; rate increased by: {}, updated rate: {}",
-                        &nodes[node_idx].label,
+                        &nodes[*node_idx].label,
                         node_idx + 1,
-                        &nodes[node_idx].rate,
+                        &nodes[*node_idx].rate,
                         total_rate
                     );
                 }
             }
             log::debug!("");
         }
-    }
-
-    optimized_result.total_pressure_released
 }
 
 fn main() {

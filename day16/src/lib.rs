@@ -1,6 +1,6 @@
 #![feature(lazy_cell)]
 
-use std::sync::LazyLock;
+use std::{sync::LazyLock, collections::{HashSet, HashMap}, io::{Read, BufReader, BufRead}};
 
 use regex::Regex;
 
@@ -40,4 +40,46 @@ impl Node {
             .collect();
         Node::new(label, rate, tunnels_labels)
     }
+}
+
+pub fn parse_nodes(reader: impl Read) -> Vec<Node> {
+    let mut nodes: Vec<Node> = vec![];
+    let mut label_to_node_idx: HashMap<String, usize> = HashMap::new();
+
+    // Initial parsing of labels
+    for (idx, maybe_line) in BufReader::new(reader).lines().enumerate() {
+        let line = maybe_line.unwrap();
+        let node = Node::parse(line);
+        label_to_node_idx.insert(node.label.clone(), idx);
+        nodes.push(node);
+    }
+
+    // Convert and assign nodes labels to indexes for more optimal and convenient access
+    for node in nodes.iter_mut() {
+        node.tunnels_idx = node
+            .tunnels_labels
+            .iter()
+            .map(|label| *label_to_node_idx.get(label.as_str()).unwrap())
+            .collect();
+    }
+
+    assert!(
+        nodes.len() <= 128,
+        "`CacheKey` struct is specifically optimized for less than 128 nodes"
+    );
+    nodes
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum Action {
+    Idle,
+    Move(usize),
+    Open(usize),
+}
+
+
+pub fn decode_open_valves_indexes(open_valves: u128) -> HashSet<usize> {
+    (0..128)
+        .filter(|idx| open_valves & (1 << idx) > 0)
+        .collect()
 }
