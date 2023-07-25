@@ -12,5 +12,5 @@ name = "day05_part2"
 
 
 [dependencies]
-regex = "1.7.1"
-rust-embed = "6.6"
+regex = "1,<2"
+rust-embed = "6,<7"

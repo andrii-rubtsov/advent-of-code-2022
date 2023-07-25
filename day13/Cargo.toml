@@ -11,6 +11,6 @@ name = "day13_part1"
 name = "day13_part2"
 
 [dependencies]
-pest = "2.7.0"
-pest_derive = "2.7.0"
-rust-embed = "6.6"
+pest = "2,<3"
+pest_derive = "2,<3"
+rust-embed = "6,<7"

@@ -11,4 +11,4 @@ name = "day14_part1"
 name = "day14_part2"
 
 [dependencies]
-rust-embed = "6.6"
+rust-embed = "6,<7"
