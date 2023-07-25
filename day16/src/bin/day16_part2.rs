@@ -4,6 +4,7 @@
 
 use day16::{generate_scenarios_for_single_worker, parse_valves_network, ValveId};
 
+use log::LevelFilter;
 use rust_embed::RustEmbed;
 use std::{cmp::Reverse, io::Read};
 
@@ -57,6 +58,11 @@ fn calculate_max_pressure_released(
 }
 
 fn main() {
+    pretty_env_logger::formatted_timed_builder()
+        .filter(None, LevelFilter::Debug)
+        .format_timestamp_millis()
+        .init();
+    
     let asset = Asset::get("input.txt").unwrap();
     let max_pressure_released = calculate_max_pressure_released(asset.data.as_ref(), 30, 4, "AA");
     log::info!("Max pressure released: {max_pressure_released}");
