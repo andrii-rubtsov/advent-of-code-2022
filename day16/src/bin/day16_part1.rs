@@ -1,83 +1,28 @@
 /*! See https://adventofcode.com/2022/day/16 */
 
-use day16::{Node, Action, decode_open_valves_indexes, parse_nodes};
+#![allow(non_upper_case_globals)]
+
+use day16::{
+    calc_pressure_released, generate_possible_routes, parse_nodes, Action, Node, OptimalResult,
+    PathFinder,
+};
 use log::LevelFilter;
 
 use rust_embed::RustEmbed;
-use std::{
-    collections::{HashMap, HashSet},
-    io::Read,
-};
+use std::io::Read;
 
 #[derive(RustEmbed)]
 #[folder = "."]
 struct Asset;
+#[derive(Clone, Debug, Default)]
 
-#[derive(Hash, Debug, Clone, Eq, PartialEq)]
-struct CacheKey {
-    current_node_idx: usize,
-    open_valves: u128, // ASSUMPTION: the total number of valves is less than 128
-    time_budget: usize,
+struct ReleasedPressureOptimizer {
+    nodes: Vec<Node>,
 }
 
-impl CacheKey {
-    fn new(current_node_idx: usize, open_valves: u128, time_budget: usize) -> Self {
-        CacheKey {
-            current_node_idx,
-            open_valves,
-            time_budget,
-        }
-    }
-
-    pub fn is_valve_open(&self, node_index: usize) -> bool {
-        self.open_valves & (1 << node_index) > 0
-    }
-
-    fn key_for_opened_node(&self, node_idx: usize) -> Self {
-        CacheKey::new(
-            node_idx,
-            self.open_valves | 1 << node_idx,
-            self.time_budget - 1,
-        )
-    }
-
-    fn key_for_go_to_new_node(&self, new_node_idx: usize) -> Self {
-        CacheKey::new(new_node_idx, self.open_valves, self.time_budget - 1)
-    }
-
-    fn decode_open_valves_indexes(&self) -> HashSet<usize> {
-        decode_open_valves_indexes(self.open_valves)
-    }
-}
-
-
-
-#[derive(Clone, Debug)]
-struct OptimizedResult {
-    total_pressure_released: usize,
-    actions_lineage: Vec<Action>,
-}
-
-impl OptimizedResult {
-    pub fn new(total_pressure_released: usize, actions_lineage: Vec<Action>) -> Self {
-        OptimizedResult {
-            total_pressure_released,
-            actions_lineage,
-        }
-    }
-}
-
-struct CachingReleasedPressureOptimizer<'a> {
-    pub nodes: &'a Vec<Node>,
-    cache: HashMap<CacheKey, OptimizedResult>,
-}
-
-impl<'a> CachingReleasedPressureOptimizer<'a> {
-    pub fn new(nodes: &'a Vec<Node>) -> Self {
-        CachingReleasedPressureOptimizer {
-            nodes,
-            cache: HashMap::new(),
-        }
+impl ReleasedPressureOptimizer {
+    pub fn new(nodes: Vec<Node>) -> Self {
+        ReleasedPressureOptimizer { nodes }
     }
 
     /// Calculates the maximum amount of released pressure.
@@ -85,119 +30,51 @@ impl<'a> CachingReleasedPressureOptimizer<'a> {
     /// that lead to the optimal solution.
     pub fn maximize_released_pressure(
         &mut self,
-        time_budget_mins: usize,
+        time_budget: usize,
         initial_node_label: &str,
-    ) -> OptimizedResult {
+    ) -> OptimalResult<Action> {
         let initial_node_idx = self
             .nodes
             .iter()
             .position(|node| node.label.eq(initial_node_label))
             .unwrap();
 
-        let cache_key_initial = CacheKey::new(
+        let positive_rate_nodes = (0..self.nodes.len())
+            .filter(|&i| self.nodes[i].rate > 0)
+            .collect::<Vec<_>>();
+
+        let path_finder = {
+            let mut relevant_nodes = positive_rate_nodes.clone();
+            relevant_nodes.push(initial_node_idx);
+            PathFinder::new_with_cache(&self.nodes, &relevant_nodes)
+        };
+
+        let own_routes = generate_possible_routes(
+            &path_finder,
             initial_node_idx,
-            0, // currently opened valves (none)
-            time_budget_mins,
+            &positive_rate_nodes,
+            time_budget,
         );
-        self.maximize_for_cache_key(cache_key_initial)
-    }
 
-    fn calc_released_pressure_for_open(nodes: &[Node], cache_key: &CacheKey) -> usize {
-        cache_key
-            .decode_open_valves_indexes()
-            .iter()
-            .map(|&idx| nodes[idx].rate)
-            .sum()
-    }
+        let mut max_pressure_released = 0;
+        let mut lineage: Vec<Action> = Vec::new();
 
-    fn maximize_for_cache_key(&mut self, cache_key: CacheKey) -> OptimizedResult {
-        if let Some(cached) = self.cache.get(&cache_key) {
-            return cached.clone();
+        for own_route in own_routes.iter() {
+            let total_own_released = calc_pressure_released(own_route, &self.nodes, time_budget);
+            if max_pressure_released < total_own_released.0 {
+                max_pressure_released = total_own_released.0;
+                lineage = total_own_released.1;
+            }
         }
-        let node_idx = cache_key.current_node_idx;
-
-        // No matter what, the currently open valves will release pressure for the given cycle
-        let current_total_rate = CachingReleasedPressureOptimizer::calc_released_pressure_for_open(
-            self.nodes, &cache_key,
-        );
-
-        let (mut next_optimized_result, action): (OptimizedResult, Action) =
-            match cache_key.time_budget {
-                // if there is only one time cycle left,
-                // it is not enough to open or move to a neighbour node
-                1 => (OptimizedResult::new(0, vec![]), Action::Idle),
-                time => {
-                    // 3 actions possible (need to choose the best):
-
-                    // 1) The first option is nothing
-                    let mut action = Action::Idle;
-                    let mut optimal = OptimizedResult::new(
-                        (time - 1) * current_total_rate,
-                        vec![Action::Idle; time - 1],
-                    );
-
-                    // 2) Second option is to try opening the current valve
-                    if self.nodes[node_idx].rate > 0 && !cache_key.is_valve_open(node_idx) {
-                        let new_cache_key = cache_key.key_for_opened_node(node_idx);
-                        let result = self.maximize_for_cache_key(new_cache_key);
-                        if optimal.total_pressure_released < result.total_pressure_released {
-                            optimal = result;
-                            action = Action::Open(node_idx);
-                        }
-                    }
-
-                    // 3) The third option is to try going to neighbours
-                    let neighbours = self.nodes[node_idx].tunnels_idx.clone();
-                    for neighbour_idx in neighbours {
-                        let new_cache_key = cache_key.key_for_go_to_new_node(neighbour_idx);
-                        let result = self.maximize_for_cache_key(new_cache_key);
-                        if optimal.total_pressure_released < result.total_pressure_released {
-                            optimal = result;
-                            action = Action::Move(neighbour_idx);
-                        }
-                    }
-                    (optimal, action)
-                }
-            };
-
-        let mut optimal_actions = vec![action];
-        optimal_actions.append(&mut next_optimized_result.actions_lineage);
-
-        let updated_result = OptimizedResult::new(
-            next_optimized_result.total_pressure_released + current_total_rate,
-            optimal_actions,
-        );
-
-        self.cache.insert(cache_key, updated_result.clone());
-        updated_result
-    }
-}
-
-
-fn calculate_max_pressure_released(
-    reader: impl Read,
-    time_budget_mins: usize,
-    initial_node_label: &str,
-) -> usize {
-    let nodes = parse_nodes(reader);
-    let mut optimizer = CachingReleasedPressureOptimizer::new(&nodes);
-
-    let optimized_result =
-        optimizer.maximize_released_pressure(time_budget_mins, initial_node_label);
-
-    if log::log_enabled!(log::Level::Debug) {
-        print_debug_actions(optimized_result.actions_lineage.iter(), &nodes);
+        OptimalResult::new(max_pressure_released, lineage)
     }
 
-    optimized_result.total_pressure_released
-}
-
-fn print_debug_actions<'a>(actions_lineage: impl Iterator<Item=&'a Action>, nodes: &[Node]) {
-    let mut open_valves: Vec<usize> = vec![];
+    fn print_lineage(self, result: &OptimalResult<Action>) {
+        let mut open_valves: Vec<usize> = vec![];
         let mut total_rate = 0;
         let mut released_so_far = 0;
 
-        for (idx, action) in actions_lineage.enumerate() {
+        for (idx, action) in result.actions_lineage.iter().enumerate() {
             log::debug!("=== Minute {} ===", idx + 1);
             if open_valves.is_empty() {
                 log::debug!("Valves open: <none>");
@@ -206,7 +83,7 @@ fn print_debug_actions<'a>(actions_lineage: impl Iterator<Item=&'a Action>, node
                     "Open valves: {}",
                     open_valves
                         .iter()
-                        .map(|&idx| format!("{}-{}", &nodes[idx].label, idx + 1))
+                        .map(|&idx| format!("{}-{}", &self.nodes[idx].label, idx + 1))
                         .collect::<Vec<String>>()
                         .join(", ")
                 );
@@ -223,25 +100,43 @@ fn print_debug_actions<'a>(actions_lineage: impl Iterator<Item=&'a Action>, node
                 Action::Move(node_idx) => {
                     log::debug!(
                         "Action: move to node {}-{}",
-                        &nodes[*node_idx].label,
+                        &self.nodes[*node_idx].label,
                         node_idx + 1
                     );
                 }
                 Action::Open(node_idx) => {
-
                     open_valves.push(*node_idx);
-                    total_rate += nodes[*node_idx].rate;
+                    total_rate += &self.nodes[*node_idx].rate;
                     log::debug!(
                         "Action: open node {}-{}; rate increased by: {}, updated rate: {}",
-                        &nodes[*node_idx].label,
+                        &self.nodes[*node_idx].label,
                         node_idx + 1,
-                        &nodes[*node_idx].rate,
+                        &self.nodes[*node_idx].rate,
                         total_rate
                     );
                 }
             }
             log::debug!("");
         }
+    }
+}
+
+fn calculate_max_pressure_released(
+    reader: impl Read,
+    time_budget_mins: usize,
+    initial_node_label: &str,
+) -> usize {
+    let nodes = parse_nodes(reader);
+    let mut optimizer = ReleasedPressureOptimizer::new(nodes);
+
+    let optimized_result =
+        optimizer.maximize_released_pressure(time_budget_mins, initial_node_label);
+
+    if log::log_enabled!(log::Level::Debug) {
+        optimizer.print_lineage(&optimized_result);
+    }
+
+    optimized_result.total_pressure_released
 }
 
 fn main() {
