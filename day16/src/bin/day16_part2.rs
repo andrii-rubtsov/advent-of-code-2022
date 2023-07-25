@@ -217,6 +217,7 @@ mod tests {
     //#[test]
     // Currently it takes ~1 minute to run (probably the solution it suboptimal)
     // Thus it is disabled.
+    #[allow(dead_code)]
     fn actual_input() {
         let asset = Asset::get("input.txt").unwrap();
         let max_pressure_released =
