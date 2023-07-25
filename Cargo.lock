@@ -177,6 +177,7 @@ dependencies = [
 name = "day16"
 version = "0.1.0"
 dependencies = [
+ "itertools",
  "log",
  "pretty_env_logger",
  "regex",

@@ -13,136 +13,126 @@ pub static INPUT_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Valve (?P<label>\w+) has flow rate=(?P<rate>\d+); tunnel(s)? lead(s)? to valve(s)? (?P<valves>.*)").unwrap()
 });
 
+pub type ValveId = usize;
+
+pub type EncodedRouteValvesSet = usize;
+
 #[derive(Eq, PartialEq, Clone, Debug)]
-pub struct Node {
+pub struct Valve {
+    pub valve_id: ValveId,
     pub label: String,
     pub rate: usize,
-    pub tunnels_labels: Vec<String>,
-    pub tunnels_idx: Vec<usize>,
+    pub link_valve_labels: Vec<String>,
+    pub link_valves_ids: Vec<ValveId>,
 }
 
-impl Node {
-    pub fn new(label: String, rate: usize, tunnels_labels: Vec<String>) -> Self {
-        Node {
+impl Valve {
+    pub fn new(
+        valve_id: ValveId,
+        label: String,
+        rate: usize,
+        link_valve_labels: Vec<String>,
+    ) -> Self {
+        Valve {
+            valve_id,
             label,
             rate,
-            tunnels_labels,
-            tunnels_idx: vec![],
+            link_valve_labels,
+            link_valves_ids: vec![],
         }
     }
 
-    pub fn parse(input: String) -> Self {
+    pub fn parse(input: String, valve_id: ValveId) -> Self {
         let captures = INPUT_REGEX.captures_iter(input.as_str()).next().unwrap();
         let label = captures.name("label").unwrap().as_str().to_owned();
         let rate: usize = captures.name("rate").unwrap().as_str().parse().unwrap();
-        let tunnels_labels: Vec<String> = captures
+        let link_valve_labels: Vec<String> = captures
             .name("valves")
             .unwrap()
             .as_str()
             .split(", ")
             .map(|s| s.to_owned())
             .collect();
-        Node::new(label, rate, tunnels_labels)
+        Valve::new(valve_id, label, rate, link_valve_labels)
     }
 }
 
-pub fn parse_nodes(reader: impl Read) -> Vec<Node> {
-    let mut nodes: Vec<Node> = vec![];
-    let mut label_to_node_idx: HashMap<String, usize> = HashMap::new();
+pub fn parse_valves_network(reader: impl Read) -> Vec<Valve> {
+    let mut valves: Vec<Valve> = vec![];
+    let mut label_to_valve_ids: HashMap<String, ValveId> = HashMap::new();
 
     // Initial parsing of labels
-    for (idx, maybe_line) in BufReader::new(reader).lines().enumerate() {
+    for (valve_id, maybe_line) in BufReader::new(reader).lines().enumerate() {
         let line = maybe_line.unwrap();
-        let node = Node::parse(line);
-        label_to_node_idx.insert(node.label.clone(), idx);
-        nodes.push(node);
+        let valve = Valve::parse(line, valve_id);
+        label_to_valve_ids.insert(valve.label.clone(), valve_id);
+        valves.push(valve);
     }
 
-    // Convert and assign nodes labels to indexes for more optimal and convenient access
-    for node in nodes.iter_mut() {
-        node.tunnels_idx = node
-            .tunnels_labels
+    // Convert valve labels to valve ids for more optimal and convenient access
+    for valve in valves.iter_mut() {
+        valve.link_valves_ids = valve
+            .link_valve_labels
             .iter()
-            .map(|label| *label_to_node_idx.get(label.as_str()).unwrap())
+            .map(|label| *label_to_valve_ids.get(label.as_str()).unwrap())
             .collect();
     }
 
     assert!(
-        nodes.len() <= 128,
-        "`CacheKey` struct is specifically optimized for less than 128 nodes"
+        valves.len() < 128,
+        "Some logic in this crate assumes the total number of valves to be less than 128"
     );
-    nodes
+    valves
 }
 
-pub struct PathFinder<'a> {
-    pub nodes: &'a [Node],
-    cache: HashMap<(usize, usize), Vec<usize>>,
+struct PathFinder<'a> {
+    pub valve: &'a [Valve],
+    cache: HashMap<(ValveId, ValveId), Vec<ValveId>>,
 }
 
 impl<'a> PathFinder<'a> {
-    pub fn new(nodes: &'a [Node]) -> Self {
+    pub fn new(valves: &'a [Valve]) -> Self {
         PathFinder {
-            nodes,
+            valve: valves,
             cache: HashMap::new(),
         }
     }
 
-    pub fn new_with_cache(all_nodes: &'a [Node], nodes: &[usize]) -> Self {
-        let mut pf = PathFinder::new(all_nodes);
-        pf.initialize_cache(nodes);
+    pub fn new_with_cache(valves_network: &'a [Valve], valves_to_precache: &[ValveId]) -> Self {
+        let mut pf = PathFinder::new(valves_network);
+        pf.initialize_cache(valves_to_precache);
         pf
     }
 
-    pub fn shortest_path_len(&mut self, from: usize, to: usize) -> usize {
-        let key = (from, to);
-        assert!(from != to);
-
-        if self.cache.contains_key(&key) {
-            return self.cache.get(&key).unwrap().len();
-        }
-        let path = self.breadth_first_search(from, to);
-        match path {
-            None => unreachable!("Isoalted island of node are not expected!"),
-            Some(mut path) => {
-                let ans = path.len();
-                self.cache.insert(key, path.clone());
-                path.reverse();
-                self.cache.insert((to, from), path);
-                ans
-            }
-        }
-    }
-
-    pub fn shortest_path_cached(&self, from: usize, to: usize) -> &[usize] {
+    pub fn shortest_path_cached(&self, from: ValveId, to: ValveId) -> &[ValveId] {
         self.cache.get(&(from, to)).unwrap()
     }
 
-    pub fn shortest_path(&mut self, from: usize, to: usize) -> &[usize] {
+    fn shortest_path(&mut self, from: ValveId, to: ValveId) -> &[ValveId] {
         let key = (from, to);
         assert!(from != to);
 
         if self.cache.contains_key(&key) {
             return self.cache.get(&key).unwrap();
         }
-        let result = self.breadth_first_search(from, to);
-        match result {
-            None => unreachable!("Isolated island of node are not expected!"),
-            Some(mut lineage) => {
-                self.cache.insert(key, lineage.clone());
+        match self.breadth_first_search(from, to) {
+            None => unreachable!("Isolated island of valves are not expected!"),
+            Some(mut path) => {
+                self.cache.insert(key, path.clone());
                 let rev_key = (to, from);
-                lineage.reverse();
-                self.cache.insert(rev_key, lineage);
+                path.reverse();
+                self.cache.insert(rev_key, path);
                 self.cache.get(&key).unwrap()
             }
         }
     }
 
-    fn breadth_first_search(&self, from: usize, to: usize) -> Option<Vec<usize>> {
-        let mut from_queue: Vec<usize> = vec![from];
-        let mut to_queue: Vec<usize> = vec![to];
+    fn breadth_first_search(&self, from: ValveId, to: ValveId) -> Option<Vec<ValveId>> {
+        let mut from_queue: Vec<ValveId> = vec![from];
+        let mut to_queue: Vec<ValveId> = vec![to];
 
-        let mut from_queue_next: Vec<usize> = vec![];
-        let mut to_queue_next: Vec<usize> = vec![];
+        let mut from_queue_next: Vec<ValveId> = vec![];
+        let mut to_queue_next: Vec<ValveId> = vec![];
 
         let mut from_lineage = HashMap::new();
         from_lineage.insert(from, vec![from]);
@@ -152,7 +142,7 @@ impl<'a> PathFinder<'a> {
 
         while !from_lineage.is_empty() || !to_lineage.is_empty() {
             for from_elem in from_queue {
-                for &neighbour in self.nodes[from_elem].tunnels_idx.iter() {
+                for &neighbour in self.valve[from_elem].link_valves_ids.iter() {
                     if from_lineage.contains_key(&neighbour) {
                         // already seen, skip
                         continue;
@@ -176,7 +166,7 @@ impl<'a> PathFinder<'a> {
                 }
             }
             for to_elem in to_queue {
-                for &neighbour in self.nodes[to_elem].tunnels_idx.iter() {
+                for &neighbour in self.valve[to_elem].link_valves_ids.iter() {
                     if to_lineage.contains_key(&neighbour) {
                         // already seen, skip
                         continue;
@@ -205,14 +195,14 @@ impl<'a> PathFinder<'a> {
             to_queue_next = vec![];
         }
 
-        // ok, if we reached this line it means that there are isolated isaland of nodes,
+        // ok, if we reached this line it means that there are isolated isaland of valves,
         // which should not happen for the input data that we have seen but it is possible in theory
         None
     }
 
-    pub fn initialize_cache(&mut self, relevant_nodes: &[usize]) {
-        for from in relevant_nodes.iter() {
-            for to in relevant_nodes.iter() {
+    pub fn initialize_cache(&mut self, relevant_valves: &[usize]) {
+        for from in relevant_valves.iter() {
+            for to in relevant_valves.iter() {
                 if from == to {
                     continue;
                 }
@@ -229,34 +219,34 @@ pub enum Action {
     Open(usize),
 }
 
-pub fn generate_possible_routes(
+fn generate_possible_routes(
     path_finder: &PathFinder,
-    initial: usize,
-    nodes_to_open: &[usize],
+    initial: ValveId,
+    valves_to_open: &[ValveId],
     time_remaining: usize,
 ) -> Vec<Vec<Action>> {
     let mut ans: Vec<Vec<Action>> = Vec::new();
 
-    for (idx, &node) in nodes_to_open.iter().enumerate() {
-        let path = path_finder.shortest_path_cached(initial, node);
+    for (valve_id, &valve) in valves_to_open.iter().enumerate() {
+        let path = path_finder.shortest_path_cached(initial, valve);
         if path.len() >= time_remaining {
             continue;
         }
         let mut actions = Vec::from_iter(path.iter().skip(1).map(|&n| Action::Move(n)));
-        actions.push(Action::Open(node));
+        actions.push(Action::Open(valve));
 
-        let mut new_nodes = Vec::with_capacity(nodes_to_open.len() - 1);
-        if idx > 0 {
-            new_nodes.append(&mut nodes_to_open[..idx].to_vec());
+        let mut new_valves = Vec::with_capacity(valves_to_open.len() - 1);
+        if valve_id > 0 {
+            new_valves.append(&mut valves_to_open[..valve_id].to_vec());
         }
-        if idx < nodes_to_open.len() - 1 {
-            new_nodes.append(&mut nodes_to_open[idx + 1..].to_vec());
+        if valve_id < valves_to_open.len() - 1 {
+            new_valves.append(&mut valves_to_open[valve_id + 1..].to_vec());
         }
 
         let next_actions =
-            generate_possible_routes(path_finder, node, &new_nodes, time_remaining - path.len());
+            generate_possible_routes(path_finder, valve, &new_valves, time_remaining - path.len());
 
-        // always add a route that preemptivbely stops and doest no go further
+        // always add a route that preemptivbely stops and does not go further,
         // this is to to avoid scenarios when the main character always attempts to
         // cover more oepn valves then optimally needed.
 
@@ -271,38 +261,54 @@ pub fn generate_possible_routes(
     ans
 }
 
-pub fn calc_pressure_released(
-    actions: &Vec<Action>,
-    nodes: &[Node],
+/// Returns the list of pairs:
+/// - the first is the encoded set of all valves that were opened during route
+/// - the actual value of the total pressure released
+pub fn generate_scenarios_for_single_worker(
+    valves: &[Valve],
     time_budget: usize,
-) -> (usize, Vec<Action>) {
-    let total_released = actions
-        .iter()
-        .enumerate()
-        .filter_map(|(time, a)| match a {
-            Action::Open(node_id) => Some(nodes[*node_id].rate * (time_budget - time - 1)),
-            _ => None,
-        })
-        .sum();
+    initial_valve_idx: usize,
+) -> Vec<(EncodedRouteValvesSet, usize)> {
+    let positive_rate_valves = (0..valves.len())
+        .filter(|&i| valves[i].rate > 0)
+        .collect::<Vec<_>>();
 
-    let mut lineage = Vec::from_iter(actions.iter().copied());
-    lineage.append(&mut vec![Action::Idle; time_budget - actions.len()]);
+    let path_finder = {
+        let mut relevant_valves = positive_rate_valves.clone();
+        relevant_valves.push(initial_valve_idx);
+        PathFinder::new_with_cache(valves, &relevant_valves)
+    };
 
-    (total_released, lineage)
-}
+    generate_possible_routes(
+        &path_finder,
+        initial_valve_idx,
+        &positive_rate_valves,
+        time_budget,
+    )
+    .iter()
+    .map(|route| {
+        let total_pressure_released = route
+            .iter()
+            .enumerate()
+            .filter_map(|(time, a)| match a {
+                Action::Open(valve_id) => Some(valves[*valve_id].rate * (time_budget - time - 1)),
+                _ => None,
+            })
+            .sum();
 
-pub struct OptimalResult<T> {
-    pub total_pressure_released: usize,
-    pub actions_lineage: Vec<T>,
-}
-
-impl<T> OptimalResult<T> {
-    pub fn new(total_pressure_released: usize, actions_lineage: Vec<T>) -> Self {
-        OptimalResult {
-            total_pressure_released,
-            actions_lineage,
-        }
-    }
+        // Compactly encodes all valves that we opened during the route into a single value.
+        // For example [1, 3, 5] becomes b`10101`.
+        // This can be used later for efficiently checking disjoint interections of valve sets.
+        let encoded_route_valves_set: EncodedRouteValvesSet = route
+            .iter()
+            .filter_map(|action| match action {
+                Action::Open(valve_id) => Some(valve_id),
+                _ => None,
+            })
+            .fold(0, |init_zero, valve_id| init_zero | (1 << valve_id));
+        (encoded_route_valves_set, total_pressure_released)
+    })
+    .collect()
 }
 
 #[allow(non_upper_case_globals)]
@@ -319,22 +325,19 @@ mod tests {
     #[test]
     fn path_finder_shortest_path() {
         let asset = Asset::get("test_input.txt").unwrap();
-        let nodes = parse_nodes(asset.data.as_ref());
-        let mut path_finder = PathFinder::new(&nodes);
+        let valve_network = parse_valves_network(asset.data.as_ref());
+        let mut path_finder = PathFinder::new(&valve_network);
 
         assert_eq!(path_finder.shortest_path(0, 5), vec![0, 3, 4, 5]);
         assert_eq!(path_finder.shortest_path(5, 0), vec![5, 4, 3, 0]);
-        assert_eq!(path_finder.shortest_path_len(0, 5), 4);
-        assert_eq!(path_finder.shortest_path_len(5, 0), 4);
 
         assert_eq!(path_finder.shortest_path(6, 4), vec![6, 5, 4]);
         assert_eq!(path_finder.shortest_path(4, 6), vec![4, 5, 6]);
-        assert_eq!(path_finder.shortest_path_len(6, 4), 3);
-        assert_eq!(path_finder.shortest_path_len(4, 6), 3);
 
         assert_eq!(path_finder.shortest_path(0, 9), vec![0, 8, 9]);
         assert_eq!(path_finder.shortest_path(9, 0), vec![9, 8, 0]);
-        assert_eq!(path_finder.shortest_path_len(0, 9), 3);
-        assert_eq!(path_finder.shortest_path_len(9, 0), 3);
+
+        assert_eq!(path_finder.shortest_path_cached(0, 9), vec![0, 8, 9]);
+        assert_eq!(path_finder.shortest_path_cached(9, 0), vec![9, 8, 0]);
     }
 }
