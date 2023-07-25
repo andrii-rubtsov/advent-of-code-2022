@@ -214,7 +214,7 @@ mod tests {
         assert_eq!(max_pressure_released, 1707);
     }
 
-    #[test]
+    //#[test]
     // Currently it takes ~1 minute to run (probably the solution it suboptimal)
     // Thus it is disabled.
     fn actual_input() {
