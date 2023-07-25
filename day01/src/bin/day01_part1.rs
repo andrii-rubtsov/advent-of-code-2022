@@ -1,4 +1,7 @@
 /*! See https://adventofcode.com/2022/day/1 */
+
+#![allow(non_upper_case_globals)]
+
 use itertools::Itertools;
 
 use std::io::{BufRead, BufReader, Read};

@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/11 */
 
+#![allow(non_upper_case_globals)]
+
 use day11::{calculate_monkey_business, parse_all_monkeys, process_round};
 use rust_embed::RustEmbed;
 use std::io::Read;

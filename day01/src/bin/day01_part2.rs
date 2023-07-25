@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/1 */
 
+#![allow(non_upper_case_globals)]
+
 use itertools::Itertools;
 use rust_embed::RustEmbed;
 use std::{

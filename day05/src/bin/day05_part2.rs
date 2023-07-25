@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/5 */
 
+#![allow(non_upper_case_globals)]
+
 use std::io::{BufRead, BufReader, Read};
 
 use day05::{Command, CrateStacks};

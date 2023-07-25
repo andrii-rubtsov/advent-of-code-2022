@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/8 */
 
+#![allow(non_upper_case_globals)]
+
 use day08::Forest;
 use std::io::Read;
 

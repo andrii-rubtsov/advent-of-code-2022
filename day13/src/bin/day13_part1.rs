@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/13 */
 
+#![allow(non_upper_case_globals)]
+
 use day13::{parse_pairs, PacketPair};
 use rust_embed::RustEmbed;
 use std::io::Read;

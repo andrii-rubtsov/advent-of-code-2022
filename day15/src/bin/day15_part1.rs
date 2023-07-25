@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/15 */
 
+#![allow(non_upper_case_globals)]
+
 use day15::{manhattan_dist, Pos, COORDS_REGEX};
 use rust_embed::RustEmbed;
 use std::{

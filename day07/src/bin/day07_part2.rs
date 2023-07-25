@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/7 */
 
+#![allow(non_upper_case_globals)]
+
 use std::io::Read;
 
 use day07::{build_virtual_fs, Node};

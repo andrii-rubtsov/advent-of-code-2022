@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/13 */
 
+#![allow(non_upper_case_globals)]
+
 use day13::{compare_elems, parse_pairs, Elem, Elem::*};
 use rust_embed::RustEmbed;
 use std::io::Read;

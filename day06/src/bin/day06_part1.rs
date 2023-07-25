@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/6 */
 
+#![allow(non_upper_case_globals)]
+
 use std::io::Read;
 
 use day06::detect_start_of_unique_window;

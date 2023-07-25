@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/9 */
 
+#![allow(non_upper_case_globals)]
+
 use day09::*;
 use rust_embed::RustEmbed;
 use std::{

@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/3 */
 
+#![allow(non_upper_case_globals)]
+
 use std::{
     collections::HashSet,
     io::{BufRead, BufReader, Read},

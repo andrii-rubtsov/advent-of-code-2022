@@ -1,5 +1,7 @@
 /*! See https://adventofcode.com/2022/day/14 */
 
+#![allow(non_upper_case_globals)]
+
 use day14::{Cave, Cell, Pos};
 use rust_embed::RustEmbed;
 use std::io::Read;
